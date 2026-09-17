@@ -143,6 +143,10 @@ The adapter must not expose Work.
 
 See [Bridge contract](references/bridge-contract.md) and [Native Codex Browser adapter](references/native-codex-browser.md). A concrete `agent-browser` adapter example is available at `adapters/agent-browser.example.json`.
 
+## Proxy setup
+
+The In-app Browser has no exposed per-tab proxy control. If external access requires a local proxy, use the `agent-browser` adapter with the validated configuration in [docs/proxy.md](docs/proxy.md).
+
 ## Live smoke
 
 The real browser/account smoke is intentionally separate from offline tests. Follow [docs/live-smoke.md](docs/live-smoke.md) only with explicit authorization to use the signed-in ChatGPT account.

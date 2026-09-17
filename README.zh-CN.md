@@ -143,6 +143,10 @@ Adapter 不得暴露 Work。
 
 参见 [Bridge contract](references/bridge-contract.md) 和 [Native Codex Browser adapter](references/native-codex-browser.md)。具体可用的 `agent-browser` adapter 示例位于 `adapters/agent-browser.example.json`。
 
+## 代理设置
+
+In-app Browser 没有公开的逐标签页代理设置。如果外网访问必须经过本地代理，使用 `agent-browser` adapter，并参考 [docs/proxy.md](docs/proxy.md) 中已经验证的配置。
+
 ## Live smoke
 
 真实浏览器和账号验收与离线测试分开。只有在明确授权使用已登录 ChatGPT 账号后，才按 [docs/live-smoke.md](docs/live-smoke.md) 执行。
