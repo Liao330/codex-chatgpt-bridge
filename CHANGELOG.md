@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Add English and Simplified Chinese README files with top-level language switching.
+- Add a concrete `agent-browser` adapter example.
+- Add the live adapter smoke checklist.
+
 ## 0.1.0
 
 - Vendor `chicogong/codex-chatgpt-web-orchestrator` at `0781dc2f18d853b77c546d5d59c6bed1243c5c47`.

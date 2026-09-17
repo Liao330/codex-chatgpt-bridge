@@ -1,5 +1,7 @@
 # Chicogong Codex Bridge
 
+**English** | [中文](README.zh-CN.md)
+
 A review-only Codex plugin for using ChatGPT Web **Chat + Pro** and **Deep Research** as external analysis/review capabilities.
 
 This project uses `chicogong/codex-chatgpt-web-orchestrator` as its pinned orchestration base. It deliberately does not implement a browser controller; the preferred adapter is the native Codex Browser / ChatGPT thread bridge.
@@ -139,7 +141,7 @@ Route capability:
 
 The adapter must not expose Work.
 
-See [Bridge contract](references/bridge-contract.md) and [Native Codex Browser adapter](references/native-codex-browser.md).
+See [Bridge contract](references/bridge-contract.md) and [Native Codex Browser adapter](references/native-codex-browser.md). A concrete `agent-browser` adapter example is available at `adapters/agent-browser.example.json`.
 
 ## Live smoke
 

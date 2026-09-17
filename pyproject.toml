@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chicogong-codex-bridge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Review-only Codex orchestration for ChatGPT Web Pro and Deep Research"
 readme = "README.md"
 requires-python = ">=3.10"
