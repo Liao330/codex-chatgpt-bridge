@@ -1,6 +1,8 @@
-# agent-browser Proxy Setup
+# agent-browser Proxy Setup (Fallback Only)
 
-The In-app Browser is managed by the Codex host and does not expose a per-tab proxy setting. Use the `agent-browser` adapter when the host must reach ChatGPT through a local proxy.
+Use this only when the In-app Browser cannot reach ChatGPT. If the In-app Browser works, do not run `agent-browser --headed`; that command launches a separate system Chrome window.
+
+The In-app Browser is managed by the Codex host and does not expose a per-tab proxy setting. Use the `agent-browser` adapter only as an explicitly approved fallback when the host must reach ChatGPT through a local proxy.
 
 Validated Windows configuration:
 

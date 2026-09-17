@@ -145,7 +145,7 @@ Adapter 不得暴露 Work。
 
 ## 代理设置
 
-In-app Browser 没有公开的逐标签页代理设置。如果外网访问必须经过本地代理，使用 `agent-browser` adapter，并参考 [docs/proxy.md](docs/proxy.md) 中已经验证的配置。
+优先使用原生 In-app Browser。只有当它无法访问目标且用户明确同意 fallback 时，才使用 [docs/proxy.md](docs/proxy.md) 中的 `agent-browser` 代理配置。In-app Browser 可用时，不得启动 headed 系统浏览器。
 
 ## Live smoke
 

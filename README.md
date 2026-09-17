@@ -145,7 +145,7 @@ See [Bridge contract](references/bridge-contract.md) and [Native Codex Browser a
 
 ## Proxy setup
 
-The In-app Browser has no exposed per-tab proxy control. If external access requires a local proxy, use the `agent-browser` adapter with the validated configuration in [docs/proxy.md](docs/proxy.md).
+Prefer the native In-app Browser. Only if it cannot reach the target and the user explicitly approves the fallback, use the `agent-browser` proxy configuration in [docs/proxy.md](docs/proxy.md). Do not launch a headed system browser when the In-app Browser works.
 
 ## Live smoke
 
