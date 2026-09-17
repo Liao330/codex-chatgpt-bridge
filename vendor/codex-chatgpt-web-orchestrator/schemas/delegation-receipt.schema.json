@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/codex-chatgpt-web-orchestrator/delegation-receipt.schema.json",
+  "title": "Public Delegation Receipt",
+  "description": "Adapter-neutral public evidence receipt. Raw adapter, run, conversation, and continuation identities are forbidden and belong in the private sidecar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "authorization", "prompt", "adapter",
+    "private_binding", "submission", "route_evidence", "outcome",
+    "acceptance", "continuation", "integrity"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "receipt_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"},
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scope_sha256", "prompt_sha256", "exact_prompt_approved", "destination_class", "authorized_at"],
+      "properties": {
+        "scope_sha256": {"$ref": "#/$defs/sha256"},
+        "prompt_sha256": {"$ref": "#/$defs/sha256"},
+        "exact_prompt_approved": {"const": true},
+        "destination_class": {"enum": ["visible-chatgpt-web", "user-operated-manual"]},
+        "authorized_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "prompt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sha256", "bytes", "stored_in_public_receipt"],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "stored_in_public_receipt": {"const": false}
+      }
+    },
+    "adapter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family", "kind", "runtime_claim", "capabilities"],
+      "properties": {
+        "family": {"enum": ["native-control-style", "oracle-style"]},
+        "kind": {"enum": ["browser-thread-bridge", "saved-browser-session"]},
+        "runtime_claim": {"const": "style-mapping-only"},
+        "capabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["send", "observe", "capture", "stable_identity", "chat_pro", "deep_research", "work"]}}
+      }
+    },
+    "private_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["private_sidecar_present", "adapter_identity_commitment", "run_identity_commitment", "continuation_identity_commitment"],
+      "properties": {
+        "private_sidecar_present": {"const": true},
+        "adapter_identity_commitment": {"$ref": "#/$defs/sha256"},
+        "run_identity_commitment": {"$ref": "#/$defs/sha256"},
+        "continuation_identity_commitment": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "submission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "count", "acknowledgement_observed", "committed_at"],
+      "properties": {
+        "state": {"enum": ["not-sent", "committing", "committed"]},
+        "count": {"type": "integer", "minimum": 0, "maximum": 1},
+        "acknowledgement_observed": {"type": "boolean"},
+        "committed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "route_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["surface", "mode", "model_label", "mode_verified", "model_verified", "evidence_source", "observed_at"],
+      "properties": {
+        "surface": {"enum": ["chat", "work"]},
+        "mode": {"enum": ["chat-pro", "deep-research", "work"]},
+        "model_label": {"type": "string", "minLength": 1},
+        "mode_verified": {"type": "boolean"},
+        "model_verified": {"type": "boolean"},
+        "evidence_source": {"enum": ["visible-control", "adapter-report-with-postcondition", "user-operated-evidence"]},
+        "observed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "terminal_signal", "final_output_captured", "output_characters", "artifacts", "citations", "completed_at"],
+      "properties": {
+        "status": {"enum": ["generating", "complete", "partial", "incomplete", "blocked", "unknown"]},
+        "terminal_signal": {"type": "boolean"},
+        "final_output_captured": {"type": "boolean"},
+        "output_characters": {"type": "integer", "minimum": 0},
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+        "citations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "uri", "pattern": "^https://"}},
+        "completed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "acceptance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verdict", "criteria", "evaluated_at"],
+      "properties": {
+        "verdict": {"enum": ["accept", "hold", "reject"]},
+        "criteria": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/criterion"}},
+        "evaluated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "continuation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["available", "private_locator_present", "identity_commitment"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "private_locator_present": {"type": "boolean"},
+        "identity_commitment": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "integrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "covered_fields", "canonical_sha256"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "covered_fields": {"type": "array", "minItems": 11, "maxItems": 11, "uniqueItems": true, "items": {"type": "string"}},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "media_type", "bytes", "sha256", "captured"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "media_type": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "captured": {"type": "boolean"}
+      }
+    },
+    "criterion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "status", "evidence_ref"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "fail", "pending"]},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

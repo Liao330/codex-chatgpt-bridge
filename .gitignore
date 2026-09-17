@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+.ccw/
+.test-ccw-home/
+work-test/
+dist/
+build/
+*.egg-info/
+vendor/**/upstream.tar.gz
+receipt.private.json
+private.json

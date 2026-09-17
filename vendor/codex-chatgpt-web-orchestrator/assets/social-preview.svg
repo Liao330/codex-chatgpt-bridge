@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Codex ChatGPT Web Orchestrator social preview candidate</title>
+  <desc id="desc">Codex routes tasks to ChatGPT Pro, Deep Research, and Work, then recovers and verifies results.</desc>
+  <rect width="1280" height="640" fill="#0d1119"/>
+  <circle cx="1050" cy="100" r="240" fill="#5de4c7" opacity=".08"/>
+  <circle cx="1080" cy="560" r="280" fill="#7aa2f7" opacity=".08"/>
+  <g transform="translate(112 118)">
+    <rect width="176" height="176" rx="44" fill="#151d2a" stroke="#2b3548" stroke-width="4"/>
+    <path d="M88 88 44 44M88 88l44-44M88 88l44 44M132 132 44 44" fill="none" stroke="#5de4c7" stroke-width="10" stroke-linecap="round" opacity=".85"/>
+    <circle cx="44" cy="44" r="16" fill="#f6c177"/>
+    <circle cx="132" cy="44" r="16" fill="#7aa2f7"/>
+    <circle cx="132" cy="132" r="16" fill="#bb9af7"/>
+    <circle cx="88" cy="88" r="28" fill="#151d2a" stroke="#f2f4f8" stroke-width="9"/>
+  </g>
+  <text x="344" y="185" fill="#f2f4f8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="61" font-weight="700">Codex ChatGPT</text>
+  <text x="344" y="256" fill="#f2f4f8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="61" font-weight="700">Web Orchestrator</text>
+  <text x="116" y="382" fill="#aab4c5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="31">Route Pro, Deep Research, and Work.</text>
+  <text x="116" y="432" fill="#aab4c5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="31">Recover complete results. Verify before reuse.</text>
+  <g transform="translate(116 500)" font-family="ui-monospace, monospace" font-size="23">
+    <rect width="158" height="48" rx="24" fill="#283342"/><text x="25" y="32" fill="#f6c177">CHAT PRO</text>
+    <rect x="176" width="236" height="48" rx="24" fill="#283342"/><text x="202" y="32" fill="#5de4c7">DEEP RESEARCH</text>
+    <rect x="430" width="126" height="48" rx="24" fill="#283342"/><text x="459" y="32" fill="#bb9af7">WORK</text>
+  </g>
+</svg>

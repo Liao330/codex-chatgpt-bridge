@@ -1,0 +1,39 @@
+{
+  "defect": "PREFLIGHT-SURFACE-001",
+  "status": "reproducible-internal-dogfood",
+  "summary": "A Pro label remains visible while the bridge or bound Chat/Work surface is not stable enough to fill or send a prompt.",
+  "attempts": [
+    {
+      "attempt": 1,
+      "bridge_connected": false,
+      "tab_bound": false,
+      "identity_stable": false,
+      "identity_reopenable": false,
+      "expected_surface": "chat",
+      "observed_surface": null,
+      "mode_verified": false,
+      "model_verified": true,
+      "composer_interactive": false,
+      "stable_read_count": 0,
+      "prompt_filled": false,
+      "submission_count": 0,
+      "expected_action": "reacquire_bridge_no_send"
+    },
+    {
+      "attempt": 2,
+      "bridge_connected": true,
+      "tab_bound": true,
+      "identity_stable": false,
+      "identity_reopenable": true,
+      "expected_surface": "chat",
+      "observed_surface": "work",
+      "mode_verified": false,
+      "model_verified": true,
+      "composer_interactive": false,
+      "stable_read_count": 0,
+      "prompt_filled": false,
+      "submission_count": 0,
+      "expected_action": "reopen_same_identity_no_send"
+    }
+  ]
+}

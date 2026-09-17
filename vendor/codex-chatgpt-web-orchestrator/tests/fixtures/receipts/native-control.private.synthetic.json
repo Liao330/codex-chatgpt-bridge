@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "receipt_id": "receipt-native-control-demo",
+  "synthetic_fixture": true,
+  "adapter_identity": "synthetic-native-control-adapter",
+  "run_identity": "synthetic-native-control-run",
+  "continuation_identity": "synthetic-native-control-continuation"
+}

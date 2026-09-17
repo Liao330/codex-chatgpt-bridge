@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "receipt_id": "receipt-oracle-style-demo",
+  "synthetic_fixture": true,
+  "adapter_identity": "synthetic-oracle-adapter",
+  "run_identity": "synthetic-oracle-run",
+  "continuation_identity": "synthetic-oracle-continuation"
+}

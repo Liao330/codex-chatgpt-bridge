@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0.0",
+  "receipt_id": "receipt-oracle-style-demo",
+  "authorization": {
+    "scope_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "prompt_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "exact_prompt_approved": true,
+    "destination_class": "visible-chatgpt-web",
+    "authorized_at": "2026-01-02T00:00:00Z"
+  },
+  "prompt": {
+    "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "bytes": 256,
+    "stored_in_public_receipt": false
+  },
+  "adapter": {
+    "family": "oracle-style",
+    "kind": "saved-browser-session",
+    "runtime_claim": "style-mapping-only",
+    "capabilities": ["send", "observe", "capture", "stable_identity", "deep_research"]
+  },
+  "private_binding": {
+    "private_sidecar_present": true,
+    "adapter_identity_commitment": "d717d86a8c11648366143be34a966f5c50326033cedd7f9478a44013b6f439df",
+    "run_identity_commitment": "83a24f75b8496d48420eaeff5b0c62f95b292a46d11210d5bb0187bdb5236406",
+    "continuation_identity_commitment": "15730a9ff03745b97165ed0c03c02a272d9705bada80c67997502cdd6e81f79c"
+  },
+  "submission": {
+    "state": "committed",
+    "count": 1,
+    "acknowledgement_observed": true,
+    "committed_at": "2026-01-02T00:01:00Z"
+  },
+  "route_evidence": {
+    "surface": "chat",
+    "mode": "deep-research",
+    "model_label": "Pro",
+    "mode_verified": true,
+    "model_verified": true,
+    "evidence_source": "adapter-report-with-postcondition",
+    "observed_at": "2026-01-02T00:00:30Z"
+  },
+  "outcome": {
+    "status": "complete",
+    "terminal_signal": true,
+    "final_output_captured": true,
+    "output_characters": 2400,
+    "artifacts": [
+      {
+        "name": "public-report.md",
+        "media_type": "text/markdown",
+        "bytes": 2600,
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "captured": true
+      }
+    ],
+    "citations": ["https://www.w3.org/TR/WCAG22/"],
+    "completed_at": "2026-01-02T00:08:00Z"
+  },
+  "acceptance": {
+    "verdict": "accept",
+    "criteria": [
+      {"id": "terminal-report", "status": "pass", "evidence_ref": "outcome.final_output_captured"},
+      {"id": "ordinary-citation", "status": "pass", "evidence_ref": "outcome.citations[0]"}
+    ],
+    "evaluated_at": "2026-01-02T00:09:00Z"
+  },
+  "continuation": {
+    "available": true,
+    "private_locator_present": true,
+    "identity_commitment": "15730a9ff03745b97165ed0c03c02a272d9705bada80c67997502cdd6e81f79c"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "covered_fields": [
+      "schema_version", "receipt_id", "authorization", "prompt", "adapter",
+      "private_binding", "submission", "route_evidence", "outcome",
+      "acceptance", "continuation"
+    ],
+    "canonical_sha256": "a89b4e9e7dcc6ef8d7785803e88c1762ef57196dfe25fc051e989f1e3b7e7a30"
+  }
+}

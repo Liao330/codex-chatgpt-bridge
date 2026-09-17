@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/codex-chatgpt-web-orchestrator/delegation-receipt-private.schema.json",
+  "title": "Private Delegation Receipt Sidecar",
+  "description": "Protected local sidecar. Never publish, commit, or merge these raw identities into the public receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "synthetic_fixture", "adapter_identity", "run_identity", "continuation_identity"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "synthetic_fixture": {"type": "boolean"},
+    "adapter_identity": {"type": "string", "minLength": 1},
+    "run_identity": {"type": "string", "minLength": 1},
+    "continuation_identity": {"type": "string", "minLength": 1}
+  }
+}

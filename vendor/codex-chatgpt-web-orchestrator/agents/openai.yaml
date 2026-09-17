@@ -1,0 +1,6 @@
+interface:
+  display_name: "Codex ChatGPT Web Orchestrator"
+  short_description: "Govern ChatGPT delegation with verifiable receipts"
+  default_prompt: "Use $codex-chatgpt-web-orchestrator to delegate this task through an available ChatGPT adapter and return a verified, tamper-evident receipt."
+policy:
+  allow_implicit_invocation: true

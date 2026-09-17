@@ -1,0 +1,6 @@
+{
+  "task_kind": "critique",
+  "requested_mode": "chat-pro",
+  "referenced_conversation": true,
+  "continuity_required": true
+}

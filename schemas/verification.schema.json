@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CCW Verification",
+  "type": "object",
+  "required": ["schema_version", "passed", "checks", "failures", "warnings", "semantic_verification_required"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "passed": {"type": "boolean"},
+    "checks": {"type": "array", "items": {"type": "object"}},
+    "failures": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "verified_by": {"type": "string"},
+    "semantic_verification_required": {"const": true}
+  },
+  "additionalProperties": true
+}

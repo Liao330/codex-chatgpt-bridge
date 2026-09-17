@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0.0",
+  "receipt_id": "receipt-native-control-demo",
+  "authorization": {
+    "scope_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "exact_prompt_approved": true,
+    "destination_class": "visible-chatgpt-web",
+    "authorized_at": "2026-01-01T00:00:00Z"
+  },
+  "prompt": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bytes": 128,
+    "stored_in_public_receipt": false
+  },
+  "adapter": {
+    "family": "native-control-style",
+    "kind": "browser-thread-bridge",
+    "runtime_claim": "style-mapping-only",
+    "capabilities": ["send", "observe", "capture", "stable_identity", "chat_pro"]
+  },
+  "private_binding": {
+    "private_sidecar_present": true,
+    "adapter_identity_commitment": "a183114602b12005de636f19072c97d61586234afcb2a0d74d669f997aff445c",
+    "run_identity_commitment": "f3390ab8fcccaf567318795b9f07c805a5c7584e948b7cb7ad96da097e67e24a",
+    "continuation_identity_commitment": "03efc06e758ff7ce6f82c3ac3b6bac550a47bf6eb4fd49ad0b47ef61a918ed4e"
+  },
+  "submission": {
+    "state": "committed",
+    "count": 1,
+    "acknowledgement_observed": true,
+    "committed_at": "2026-01-01T00:01:00Z"
+  },
+  "route_evidence": {
+    "surface": "chat",
+    "mode": "chat-pro",
+    "model_label": "Pro",
+    "mode_verified": true,
+    "model_verified": true,
+    "evidence_source": "visible-control",
+    "observed_at": "2026-01-01T00:00:30Z"
+  },
+  "outcome": {
+    "status": "complete",
+    "terminal_signal": true,
+    "final_output_captured": true,
+    "output_characters": 1200,
+    "artifacts": [
+      {
+        "name": "public-result.md",
+        "media_type": "text/markdown",
+        "bytes": 1400,
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "captured": true
+      }
+    ],
+    "citations": ["https://www.w3.org/TR/WCAG22/"],
+    "completed_at": "2026-01-01T00:05:00Z"
+  },
+  "acceptance": {
+    "verdict": "accept",
+    "criteria": [
+      {"id": "complete-output", "status": "pass", "evidence_ref": "outcome.final_output_captured"},
+      {"id": "artifact-captured", "status": "pass", "evidence_ref": "outcome.artifacts[0]"}
+    ],
+    "evaluated_at": "2026-01-01T00:06:00Z"
+  },
+  "continuation": {
+    "available": true,
+    "private_locator_present": true,
+    "identity_commitment": "03efc06e758ff7ce6f82c3ac3b6bac550a47bf6eb4fd49ad0b47ef61a918ed4e"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "covered_fields": [
+      "schema_version", "receipt_id", "authorization", "prompt", "adapter",
+      "private_binding", "submission", "route_evidence", "outcome",
+      "acceptance", "continuation"
+    ],
+    "canonical_sha256": "09d060a0d3097a619908fcc7246d61b6879e7b0dddb8770761841dd8552f6cd7"
+  }
+}

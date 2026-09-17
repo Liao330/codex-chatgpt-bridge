@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Codex ChatGPT Web Orchestrator brand candidate</title>
+  <desc id="desc">A central management node routes work to three advanced worker nodes and closes the loop.</desc>
+  <rect width="512" height="512" rx="112" fill="#10151f"/>
+  <path d="M256 256 142 144M256 256l114-112M256 256l114 112M370 368 142 144" fill="none" stroke="#5de4c7" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+  <circle cx="142" cy="144" r="42" fill="#f6c177"/>
+  <circle cx="370" cy="144" r="42" fill="#7aa2f7"/>
+  <circle cx="370" cy="368" r="42" fill="#bb9af7"/>
+  <circle cx="256" cy="256" r="68" fill="#10151f" stroke="#f2f4f8" stroke-width="24"/>
+  <path d="m228 256 20 20 40-48" fill="none" stroke="#5de4c7" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

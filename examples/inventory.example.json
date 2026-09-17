@@ -1,0 +1,9 @@
+{
+  "exposed_tools": [
+    "browser_get_state",
+    "read_thread",
+    "send_message_to_thread"
+  ],
+  "exposed_skills": [],
+  "executables": []
+}

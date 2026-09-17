@@ -1,0 +1,113 @@
+{
+  "status": "executed",
+  "overall_status": "all-live-smokes-passed",
+  "live_execution_authorized": true,
+  "authorization_gate": "The owner confirmed the original exact three-prompt batch and separately authorized the Deep Research rerun immediately before execution. Any future rerun requires a new action-time confirmation.",
+  "completed_at": "2026-08-30T09:59:40+08:00",
+  "runs": [
+    {
+      "id": "chat-pro-public-plan-review",
+      "mode": "chat-pro",
+      "target": "A visible Chat conversation with the exact Pro model label approved at run time",
+      "prompt": "Review this hypothetical public migration decision: a small open-source command-line tool must move from a single configuration file to layered defaults, user configuration, and command-line overrides. Compare (A) a one-release breaking migration with an automatic converter and (B) a two-release compatibility window with deprecation warnings. Return: assumptions; a compact comparison table covering user disruption, implementation risk, rollback, and documentation burden; the three strongest failure modes; the evidence that would reverse your recommendation; and one final recommendation. Label claims as fact, inference, or unverified. Do not browse private sources, request files, take external actions, or invent adoption data.",
+      "expected_evidence": [
+        "Visible Chat mode and exact Pro model label recorded",
+        "Exactly one committed user turn in one recoverable conversation",
+        "Terminal generation signal and complete final response captured",
+        "Fact, inference, and unverified labels present"
+      ],
+      "failure_criteria": [
+        "Wrong or unverifiable model or mode",
+        "Duplicate user turn",
+        "Only partial text, active generation, or inaccessible final response",
+        "Invented private context or adoption claims"
+      ],
+      "result": {
+        "status": "passed",
+        "backend": "visible Chrome browser bridge",
+        "mode_evidence": "Chat selected",
+        "model_evidence": "Pro visible before and after submission",
+        "submission_count": 1,
+        "stable_identity_captured": true,
+        "terminal_signal": "stop control disappeared after being observed",
+        "assistant_messages": 1,
+        "captured_characters": 8881,
+        "captured_lines": 89,
+        "response_sha256": "d899ff312db4a75f3c3484d13950150da7a234255889872b613064ea56666949",
+        "normalized_output": "evidence/chat-pro-response.md",
+        "normalized_output_sha256": "d232d68968780a798bf473c0a9633b3cbd7937dc4401283f043f12df9fd437b2",
+        "conversation_url": "stored in gitignored private run record"
+      }
+    },
+    {
+      "id": "deep-research-wcag-focus",
+      "mode": "deep-research",
+      "target": "Deep Research in a visible ChatGPT conversation",
+      "prompt": "Using only current public W3C sources, research how WCAG 2.2 addresses keyboard focus visibility for web interfaces. Distinguish normative requirements from explanatory guidance. Produce a concise report with: the relevant success criteria; conformance levels; exact W3C source URLs and access dates; a comparison of Focus Visible, Focus Not Obscured, and Focus Appearance; one example that clearly passes and one that clearly fails each applicable criterion; ambiguities or interpretation limits; and a final implementation checklist. Label each material conclusion as public fact, inference, or unverified. Do not use private sources, contact anyone, change any website, or claim legal compliance.",
+      "expected_evidence": [
+        "Deep Research mode recorded and research plan visible when offered",
+        "Exactly one committed prompt in one recoverable conversation",
+        "Final cited report captured with ordinary W3C URLs",
+        "Decision-critical claims can be checked against cited W3C pages"
+      ],
+      "failure_criteria": [
+        "Deep Research mode not verified",
+        "Duplicate submission or a restarted report without approval",
+        "Missing citations, non-W3C factual sources, or inaccessible final report",
+        "Partial progress presented as a completed report"
+      ],
+      "result": {
+        "status": "passed",
+        "backend": "visible Chrome browser bridge",
+        "mode_evidence": "Deep Research selected before prompt fill and Report tab selected",
+        "model_evidence": "Pro visible; no separate research model label exposed",
+        "submission_count": 1,
+        "stable_identity_captured": true,
+        "terminal_signal": "stop control disappeared after being observed",
+        "assistant_messages": 1,
+        "captured_characters": 11226,
+        "citation_links": 21,
+        "response_sha256": "c853c8d96ffa23c6abb2cde7cc24915a525c170dfc08e9c4adc21b082a798d93",
+        "normalized_output": "evidence/deep-research-wcag-focus.md",
+        "normalized_output_sha256": "98cb1fba59c3427c5240e3abde7df71b84b8be71aecc72a933ff6fd04b2b3561",
+        "primary_source_verification": "WCAG Recommendation date, normative/informative boundary, and criteria 2.4.7, 2.4.11, 2.4.12, and 2.4.13 levels and wording independently checked against current W3C pages",
+        "pre_commit_compatibility": "Semantic button activation and Enter produced no user turn, URL, stop control, or cleared composer; the visible send control then committed exactly one user turn. No duplicate was created.",
+        "conversation_url": "stored in gitignored private run record"
+      }
+    },
+    {
+      "id": "work-lantern-cli-checklist",
+      "mode": "work",
+      "target": "A visible ChatGPT Work task",
+      "prompt": "Create a finished Markdown artifact named lantern-cli-launch-checklist.md for a fictional open-source tool called Lantern CLI. Use only this prompt. The checklist must contain: release metadata; documentation readiness; cross-platform package checks for macOS, Windows, and Linux; security and secret scanning; accessibility of terminal output; rollback steps; announcement draft review; and a final go/hold/stop gate. Every checklist item must have an owner placeholder, observable evidence, and a pass condition. Include a short Known limitations section. Do not browse, install software, publish, send messages, create accounts, or access local files. Return the artifact and a one-paragraph completion summary.",
+      "expected_evidence": [
+        "Visible Work mode and any exposed model or effort setting recorded",
+        "Exactly one task start with a stable task or conversation identity",
+        "Terminal Work state plus downloadable or fully readable Markdown artifact",
+        "Artifact opens and contains every requested section"
+      ],
+      "failure_criteria": [
+        "Wrong mode or duplicate task start",
+        "Work requests or performs an unauthorized external action",
+        "Progress commentary exists but final task state is not terminal",
+        "Artifact is missing, inaccessible, truncated, or lacks a requested section"
+      ],
+      "result": {
+        "status": "passed",
+        "backend": "visible Chrome browser bridge",
+        "mode_evidence": "Work selected",
+        "model_evidence": "5.6 Sol with Light effort visible before and after submission",
+        "submission_count": 1,
+        "stable_identity_captured": true,
+        "terminal_signal": "stop control disappeared after being observed",
+        "assistant_messages": 1,
+        "assistant_sha256": "80e62f7c924b2c10721385a5e6d9b1bc586f2105657772862f256781a4afabb8",
+        "artifact": "evidence/artifacts/lantern-cli-launch-checklist.md",
+        "artifact_bytes": 14308,
+        "artifact_lines": 205,
+        "artifact_sha256": "540489d132399a1926980f9b348fb3681b9cf956a894cdc2cb1faffd2cbe8221",
+        "conversation_url": "stored in gitignored private run record"
+      }
+    }
+  ]
+}

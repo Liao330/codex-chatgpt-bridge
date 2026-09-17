@@ -1,0 +1,67 @@
+{
+  "recorded_date": "2026-08-30",
+  "evidence_scope": "owner-reported internal dogfood; public-safe summary only",
+  "candidate_status": "internal-beta",
+  "release_impact": "none",
+  "runs": [
+    {
+      "id": "pro-image-artifact-chain",
+      "status": "passed",
+      "evidence_class": "completed-success-evidence",
+      "surface": "visible ChatGPT web",
+      "visible_model_label": "Pro",
+      "underlying_image_model": "not-visible-not-inferred",
+      "outputs_generated": 3,
+      "acceptance_results": {
+        "accepted": 3,
+        "rejected": 0
+      },
+      "verified_chain": [
+        "web-generation",
+        "download",
+        "human-visual-review",
+        "local-layout",
+        "source-and-hash-archive"
+      ],
+      "private_archive_references_included": false,
+      "release_evidence": false,
+      "assessment": "Evidence that the result-closure path can carry generated image artifacts through review and local archival; it does not identify the underlying image model or validate every route."
+    },
+    {
+      "id": "pro-long-running-after-preflight-fix",
+      "status": "complete",
+      "evidence_class": "completed-terminal-evidence",
+      "surface": "visible ChatGPT web",
+      "visible_model_label": "Pro",
+      "preflight_surface_stable": true,
+      "submission_count": 1,
+      "cancelled": false,
+      "follow_up_sent": false,
+      "retried": false,
+      "same_run_identity_recovered": true,
+      "terminal_output_captured": true,
+      "terminal_output_verified": true,
+      "output_characters_approx": 35897,
+      "release_evidence": false,
+      "next_gate": "No additional run action. Retain the continuation locator only in the protected private record.",
+      "assessment": "Evidence that the repaired preflight, single-submit, long wait, same-run recovery, terminal capture, and verification path completed for this run. It does not independently authorize release."
+    },
+    {
+      "id": "deep-research-w3c-terminal-rerun",
+      "status": "passed",
+      "evidence_class": "completed-terminal-evidence",
+      "surface": "visible ChatGPT web",
+      "visible_model_label": "Pro",
+      "mode": "deep-research",
+      "submission_count": 1,
+      "terminal_output_captured": true,
+      "terminal_output_verified": true,
+      "captured_characters": 11226,
+      "citation_links": 21,
+      "public_sources_only": true,
+      "private_archive_references_included": false,
+      "release_evidence": false,
+      "assessment": "Evidence that the Deep Research route can commit once, reach terminal state, expose a complete cited report, and support independent primary-source verification. Repository creation and release remain separate decisions."
+    }
+  ]
+}

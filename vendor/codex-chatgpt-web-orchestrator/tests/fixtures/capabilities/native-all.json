@@ -1,0 +1,13 @@
+{
+  "backends": {
+    "native": [
+      "send",
+      "observe",
+      "capture",
+      "stable_identity",
+      "chat_pro",
+      "deep_research",
+      "work"
+    ]
+  }
+}

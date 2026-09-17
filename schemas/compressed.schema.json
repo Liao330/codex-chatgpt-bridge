@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CCW Compressed Result",
+  "type": "object",
+  "required": ["schema_version", "mode", "parse_mode", "summary", "findings", "citations", "uncertainties"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "mode": {"enum": ["chat-pro", "deep-research"]},
+    "parse_mode": {"enum": ["json", "heuristic"]},
+    "summary": {"type": "array", "items": {"type": "string"}},
+    "findings": {"type": "array", "items": {"type": "object"}},
+    "key_points": {"type": "array", "items": {"type": "string"}},
+    "citations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^https://"}},
+    "uncertainties": {"type": "array", "items": {"type": "string"}},
+    "tests": {"type": "array", "items": {"type": "string"}},
+    "raw_ref": {"type": ["string", "null"]},
+    "raw_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "compression_policy": {"type": "object"}
+  },
+  "additionalProperties": true
+}

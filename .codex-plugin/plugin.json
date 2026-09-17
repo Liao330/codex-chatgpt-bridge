@@ -1,0 +1,34 @@
+{
+  "name": "chicogong-codex-bridge",
+  "version": "0.1.0",
+  "description": "Review-only Codex orchestration for ChatGPT Web Pro and Deep Research with Work permanently disabled.",
+  "author": {
+    "name": "Local developer"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "chatgpt-web",
+    "pro",
+    "deep-research",
+    "review"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Chicogong Codex Bridge",
+    "shortDescription": "Use ChatGPT Web Pro and Deep Research from Codex without Work.",
+    "longDescription": "A review-first orchestration layer derived from chicogong/codex-chatgpt-web-orchestrator. It supports Chat + Pro analysis and Deep Research with receipt-backed single submission, conversation recovery, raw/compressed output separation, and Codex verification. ChatGPT Work is permanently forbidden.",
+    "developerName": "Local developer",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Planning",
+      "Review"
+    ],
+    "defaultPrompt": [
+      "Use ChatGPT Web Pro to review the current diff.",
+      "Ask ChatGPT Pro to challenge this architecture.",
+      "Run a Deep Research task and compress the evidence."
+    ]
+  }
+}

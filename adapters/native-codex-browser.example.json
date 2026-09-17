@@ -1,0 +1,13 @@
+{
+  "identity": "native-codex-browser",
+  "family": "native-control-style",
+  "kind": "browser-thread-bridge",
+  "capabilities": [
+    "send",
+    "observe",
+    "capture",
+    "stable_identity",
+    "chat_pro",
+    "deep_research"
+  ]
+}

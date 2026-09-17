@@ -1,0 +1,6 @@
+{
+  "backends": {
+    "native": ["capture"],
+    "manual": ["stable_identity"]
+  }
+}

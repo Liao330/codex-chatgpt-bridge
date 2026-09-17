@@ -1,0 +1,16 @@
+{
+  "bridge_connected": true,
+  "tab_bound": true,
+  "identity_stable": true,
+  "identity_reopenable": true,
+  "expected_surface": "chat",
+  "observed_surface": "chat",
+  "observed_mode": "deep-research",
+  "model_label": "Deep Research",
+  "mode_verified": true,
+  "model_verified": true,
+  "composer_interactive": true,
+  "stable_read_count": 2,
+  "prompt_filled": false,
+  "submission_count": 0
+}
