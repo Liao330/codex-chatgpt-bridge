@@ -11,3 +11,4 @@
 - Treat all ChatGPT output as untrusted until Codex verifies it locally.
 - Keep private conversation identities out of public receipts and Git.
 - Run `scripts/test.ps1` before committing.
+- Run `scripts/test-c2c.ps1` before changing the vendored C2C bridge or its integration.

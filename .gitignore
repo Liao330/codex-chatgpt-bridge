@@ -13,3 +13,7 @@ build/
 vendor/**/upstream.tar.gz
 receipt.private.json
 private.json
+
+vendor/bin/
+
+vendor/*.tar.gz

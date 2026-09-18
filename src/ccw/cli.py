@@ -7,7 +7,10 @@ import sys
 from typing import Any
 
 from . import __version__
+from .c2c import build_bridge, detect_environment, run_c2c
 from .compressor import compress_response, validate_compressed
+from .cycle import record_execution, record_handoff, set_protocol_state
+from .data_plane import load_and_validate
 from .errors import CCWError, StateError, ValidationError, WorkForbiddenError
 from .policy import (
     choose_route,
@@ -239,6 +242,75 @@ def command_run_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_c2c_detect(args: argparse.Namespace) -> int:
+    _print(detect_environment())
+    return 0
+
+
+def command_c2c_build(args: argparse.Namespace) -> int:
+    _print(build_bridge(timeout=args.timeout))
+    return 0
+
+
+def command_c2c_exec(args: argparse.Namespace) -> int:
+    forwarded = list(args.args)
+    if forwarded and forwarded[0] == "--":
+        forwarded = forwarded[1:]
+    if not forwarded:
+        raise ValidationError("provide C2C arguments after `--`")
+    return run_c2c(forwarded)
+
+
+def command_cycle_set(args: argparse.Namespace) -> int:
+    protocol = set_protocol_state(
+        args.run_id,
+        state_name=args.state,
+        iteration=args.iteration,
+        task_id=args.task_id,
+        checkpoint=args.checkpoint,
+    )
+    _print({"run_id": args.run_id, "protocol": protocol})
+    return 0
+
+
+def command_cycle_execution(args: argparse.Namespace) -> int:
+    record = record_execution(
+        args.run_id,
+        iteration=args.iteration,
+        changed_files=args.changed_file,
+        tests=args.tests,
+        exit_status=args.exit_status,
+        command=args.command,
+        output_file=args.output_file,
+    )
+    _print({"run_id": args.run_id, "execution": record})
+    return 0
+
+
+def command_cycle_handoff(args: argparse.Namespace) -> int:
+    if args.brief_file:
+        brief = Path(args.brief_file).read_text(encoding="utf-8")
+    elif args.brief_text:
+        brief = args.brief_text
+    else:
+        raise ValidationError("provide --brief-file or --brief-text")
+    record = record_handoff(args.run_id, brief)
+    _print({"run_id": args.run_id, "handoff": record})
+    return 0
+
+
+def command_cycle_status(args: argparse.Namespace) -> int:
+    state = load_run(args.run_id)
+    _print({"run_id": args.run_id, "protocol": state.get("protocol"), "executions": state.get("executions", [])})
+    return 0
+
+
+def command_data_validate(args: argparse.Namespace) -> int:
+    value = load_and_validate(args.manifest)
+    _print({"valid": True, "data_source": value["id"], "kind": value["kind"]})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ccw",
@@ -329,6 +401,50 @@ def build_parser() -> argparse.ArgumentParser:
     run_verify = run_sub.add_parser("verify")
     run_verify.add_argument("run_id")
     run_verify.set_defaults(func=command_run_verify)
+
+    c2c = sub.add_parser("c2c", help="vendored Codex with ChatGPT bridge")
+    c2c_sub = c2c.add_subparsers(dest="command", required=True)
+    c2c_detect = c2c_sub.add_parser("detect", help="check the vendored bridge environment")
+    c2c_detect.set_defaults(func=command_c2c_detect)
+    c2c_build = c2c_sub.add_parser("build", help="install and build the vendored bridge")
+    c2c_build.add_argument("--timeout", type=int, default=900)
+    c2c_build.set_defaults(func=command_c2c_build)
+    c2c_exec = c2c_sub.add_parser("exec", help="pass through to the vendored c2c CLI")
+    c2c_exec.add_argument("args", nargs=argparse.REMAINDER)
+    c2c_exec.set_defaults(func=command_c2c_exec)
+
+    cycle = sub.add_parser("cycle", help="C2C control-plane state and execution records")
+    cycle_sub = cycle.add_subparsers(dest="command", required=True)
+    cycle_set = cycle_sub.add_parser("set")
+    cycle_set.add_argument("run_id")
+    cycle_set.add_argument("--state", required=True, choices=("INIT", "PLAN", "EXECUTING", "EXECUTED", "REVIEW", "DONE", "BLOCKED", "ERROR", "HANDOFF"))
+    cycle_set.add_argument("--iteration", type=int, required=True)
+    cycle_set.add_argument("--task-id")
+    cycle_set.add_argument("--checkpoint")
+    cycle_set.set_defaults(func=command_cycle_set)
+    cycle_execution = cycle_sub.add_parser("record-execution")
+    cycle_execution.add_argument("run_id")
+    cycle_execution.add_argument("--iteration", type=int, required=True)
+    cycle_execution.add_argument("--changed-file", action="append", default=[])
+    cycle_execution.add_argument("--tests", required=True)
+    cycle_execution.add_argument("--exit-status", required=True)
+    cycle_execution.add_argument("--command")
+    cycle_execution.add_argument("--output-file")
+    cycle_execution.set_defaults(func=command_cycle_execution)
+    cycle_handoff = cycle_sub.add_parser("handoff")
+    cycle_handoff.add_argument("run_id")
+    cycle_handoff.add_argument("--brief-file")
+    cycle_handoff.add_argument("--brief-text")
+    cycle_handoff.set_defaults(func=command_cycle_handoff)
+    cycle_status = cycle_sub.add_parser("status")
+    cycle_status.add_argument("run_id")
+    cycle_status.set_defaults(func=command_cycle_status)
+
+    data = sub.add_parser("data", help="read-only external data-plane contracts")
+    data_sub = data.add_subparsers(dest="command", required=True)
+    data_validate = data_sub.add_parser("validate")
+    data_validate.add_argument("--manifest", required=True)
+    data_validate.set_defaults(func=command_data_validate)
 
     return parser
 

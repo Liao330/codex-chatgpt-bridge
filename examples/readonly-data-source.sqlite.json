@@ -1,0 +1,8 @@
+{
+  "id": "metrics-readonly",
+  "kind": "sqlite",
+  "read_only": true,
+  "auth": {"type": "local_only"},
+  "tools": ["schema", "query_readonly"],
+  "limits": {"max_rows": 1000, "timeout_ms": 5000, "max_bytes": 1048576}
+}

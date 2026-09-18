@@ -142,6 +142,14 @@ def create_run(
         },
         "compression": {"status": "pending", "path": None, "schema_version": "1.0.0"},
         "verification": {"status": "pending", "path": None},
+        "protocol": {
+            "state": None,
+            "iteration": 0,
+            "task_id": None,
+            "checkpoint": None,
+            "updated_at": None,
+        },
+        "executions": [],
         "last_recovery": None,
         "events": [],
     }

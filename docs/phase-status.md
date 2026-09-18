@@ -61,3 +61,13 @@ The offline suite never opens a browser and never calls a ChatGPT account.
 ## Live acceptance
 
 The real adapter smoke test is intentionally separated into [live-smoke.md](live-smoke.md). Run it only with explicit authorization to use the signed-in ChatGPT Web account.
+
+## 0.2.0 integrated iteration
+
+- [x] Vendored codex-with-chatgpt for the C2C control and read-only MCP data planes.
+- [x] Added ccw c2c build, detect, and pass-through integration.
+- [x] Added INIT -> PLAN -> EXECUTING -> EXECUTED -> REVIEW -> DONE/BLOCKED governance.
+- [x] Added sanitized execution records and HANDOFF.
+- [x] Added read-only external data-source contracts and validation.
+- [x] Kept receipt, at-most-once submission, recovery, compression, verification, and the Work ban.
+- [x] Prefer the In-app Browser; headed system Chrome is fallback-only.

@@ -1,16 +1,21 @@
-# Chicogong Codex Bridge
+# Codex ChatGPT Bridge
 
 **中文** | [English](README.md)
 
-一个只读型 Codex 插件，用于把 ChatGPT Web 的 **Chat + Pro** 和 **Deep Research** 接入 Codex，作为外部分析和审查能力。
+一个双平面桥接项目：ChatGPT Web 负责规划、审查和研究，Codex 保留执行权与最终判断。
 
-本项目以 `chicogong/codex-chatgpt-web-orchestrator` 作为固定版本的编排底座。项目不实现浏览器控制器；首选 adapter 是 Codex 原生 Browser / ChatGPT thread bridge。
+项目组合两个固定版本的 MIT 上游底座：
+
+- `chicogong/codex-chatgpt-web-orchestrator`：路由、receipt、生命周期、恢复和治理。
+- `codex-with-chatgpt`：C2C 控制协议、只读 workspace MCP、OAuth 2.1、配对、Cloudflare Tunnel、执行记录和会话恢复。
+
+控制面优先使用 Codex In-app Browser。headed 系统浏览器仅作为 fallback，并且必须获得用户明确同意。
 
 ## 永久策略
 
 **ChatGPT Work 被永久禁止。**
 
-路由解析、adapter 清单校验、状态机、测试和 verifier 都会拒绝 Work。仅支持两种模式：
+路由解析、adapter 清单校验、状态机、测试、MCP 策略和 verifier 都会拒绝 Work。仅支持：
 
 - `chat-pro`：架构分析、代码审查、反向质询、综合判断。
 - `deep-research`：带引用的资料调研和长任务恢复。
@@ -24,7 +29,10 @@
 - 原始回复、压缩工作视图、核验记录三者分离。
 - 代码 review 的 file/line 结构校验。
 - Deep Research 的 HTTPS citation 校验与语义核验交接。
-- 提供编排、Pro 分析、Deep Research 和结果压缩的 Codex skills。
+- 只读 workspace MCP：代码、搜索、git、测试和脱敏执行记录。
+- `INIT -> PLAN -> EXECUTING -> EXECUTED -> REVIEW -> DONE/BLOCKED` 治理状态。
+- 脱敏执行记录和 HANDOFF。
+- 外部生产数据只读契约，包含行数、字节数和超时限制。
 - 离线测试不会打开浏览器，也不会调用 ChatGPT 账号。
 
 ## 仓库结构
@@ -32,52 +40,71 @@
 ```text
 .codex-plugin/       Codex 插件清单
 adapters/            Adapter 能力清单
-references/          Bridge、生命周期、输出和只读策略
-schemas/             来自 upstream 的公共 receipt schema
+docs/                Phase 状态、Live smoke、代理 fallback
+examples/            示例清单和 observation
+references/          Bridge、数据面、生命周期和输出契约
+schemas/             Receipt、核验和只读数据源 schema
 skills/              Codex skills
-src/ccw/             本地 Python 编排包
+src/ccw/             本地 Python 治理与集成包
 tests/               离线单元测试和 CLI 测试
-vendor/              固定版本的 upstream 编排底座
-scripts/             Windows 启动和校验脚本
+vendor/              固定版本的治理底座与 C2C Bridge
+scripts/             Windows 启动、测试和依赖脚本
 ```
 
 ## 快速开始
 
-运行离线测试：
+运行本地治理测试：
 
 ```powershell
 .\scripts\test.ps1
 ```
 
-校验插件清单：
+运行 vendored C2C Bridge 测试：
+
+```powershell
+.\scripts\test-c2c.ps1
+```
+
+校验插件：
 
 ```powershell
 .\scripts\validate-plugin.ps1
 ```
 
-在不读取凭据的情况下检测原生 adapter 是否存在：
+检查 C2C 环境并安装项目内置的 Tunnel 二进制：
 
 ```powershell
-.\ccw.cmd adapter detect --inventory .\examples\inventory.example.json
+.\ccw.cmd c2c detect
+.\ccw.cmd c2c build
+.\scripts\install-cloudflared.ps1
 ```
 
-规划一条路由：
+## 集成后的 C2C 闭环
+
+控制面通过 In-app Browser 发送小于 1 KB 的 `[C2C]` 状态消息。数据面通过只读 workspace MCP 暴露代码、diff、搜索、git、测试和脱敏执行记录，让 ChatGPT 自己读取需要的事实。
 
 ```powershell
-.\ccw.cmd route plan `
-  --task-kind review `
-  --mode chat-pro `
-  --capabilities .\examples\capabilities.native.json
+.\ccw.cmd c2c exec -- start --tunnel
+.\ccw.cmd c2c exec -- doctor
 ```
 
-尝试 Work 形状的任务会直接失败：
+本地同步治理状态：
 
 ```powershell
-.\ccw.cmd route plan `
-  --task-kind artifact `
-  --capabilities .\examples\capabilities.native.json
-# exit code 3: ChatGPT Work is permanently disabled in this bridge
+.\ccw.cmd cycle set <run_id> --state INIT --iteration 0 --task-id <task_id>
+.\ccw.cmd cycle set <run_id> --state PLAN --iteration 1
+.\ccw.cmd cycle set <run_id> --state EXECUTING --iteration 1
+.\ccw.cmd cycle record-execution <run_id> `
+  --iteration 1 `
+  --changed-file src/a.ts `
+  --tests "27 passed" `
+  --exit-status ok `
+  --command "pnpm test" `
+  --output-file .\test.log
+.\ccw.cmd cycle set <run_id> --state EXECUTED --iteration 1
 ```
+
+控制消息不包含文件正文、diff 或日志。详细输出保存在本地，经过脱敏后只通过只读数据面暴露。
 
 ## Pro Review 生命周期
 
@@ -93,7 +120,7 @@ scripts/             Windows 启动和校验脚本
 # 2. 授权精确 prompt。
 .\ccw.cmd run authorize <run_id>
 
-# 3. 记录原生浏览器的只读 preflight 证据。
+# 3. 记录 In-app Browser 的只读 preflight 证据。
 .\ccw.cmd run preflight <run_id> --observation .\observation.json
 
 # 4. 记录单次提交意图和 acknowledgement。
@@ -117,13 +144,27 @@ Deep Research 遵循同样的 receipt 和单次提交规则。运行时间可以
 
 ## 恢复
 
-当 run 断线或状态不明确时：
-
 ```powershell
 .\ccw.cmd run recover <run_id> --observation .\recovery.json
 ```
 
 恢复优先使用同一 conversation identity。如果身份丢失且没有保存的捕获结果，run 会进入 `unknown`，不会静默重跑。
+
+## 只读数据面
+
+workspace MCP 是主要数据面。可选生产数据源必须满足 [references/data-plane.md](references/data-plane.md)：
+
+- 只读视图或副本。
+- 远程 endpoint 使用 OAuth 2.1。
+- 强制行数、字节数和超时上限。
+- 敏感字段脱敏和访问审计。
+- 不提供写入、Shell、commit、部署或管理工具。
+
+校验外部数据源契约：
+
+```powershell
+.\ccw.cmd data validate --manifest .\examples\readonly-data-source.sqlite.json
+```
 
 ## Adapter 契约
 
@@ -139,13 +180,11 @@ Deep Research 遵循同样的 receipt 和单次提交规则。运行时间可以
 - `chat_pro`
 - `deep_research`
 
-Adapter 不得暴露 Work。
+Adapter 不得暴露 Work。参见 [references/bridge-contract.md](references/bridge-contract.md)。
 
-参见 [Bridge contract](references/bridge-contract.md) 和 [Native Codex Browser adapter](references/native-codex-browser.md)。具体可用的 `agent-browser` adapter 示例位于 `adapters/agent-browser.example.json`。
+## 代理 fallback
 
-## 代理设置
-
-优先使用原生 In-app Browser。只有当它无法访问目标且用户明确同意 fallback 时，才使用 [docs/proxy.md](docs/proxy.md) 中的 `agent-browser` 代理配置。In-app Browser 可用时，不得启动 headed 系统浏览器。
+优先使用 In-app Browser。只有当它无法访问目标且用户明确同意 fallback 时，才使用 [docs/proxy.md](docs/proxy.md) 中的 `agent-browser` 代理配置。In-app Browser 可用时，不得启动 headed 系统浏览器。
 
 ## Live smoke
 

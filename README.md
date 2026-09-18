@@ -1,16 +1,21 @@
-# Chicogong Codex Bridge
+# Codex ChatGPT Bridge
 
 **English** | [中文](README.zh-CN.md)
 
-A review-only Codex plugin for using ChatGPT Web **Chat + Pro** and **Deep Research** as external analysis/review capabilities.
+A dual-plane bridge for using ChatGPT Web as a planning, review, and research brain while Codex keeps execution and final judgment.
 
-This project uses `chicogong/codex-chatgpt-web-orchestrator` as its pinned orchestration base. It deliberately does not implement a browser controller; the preferred adapter is the native Codex Browser / ChatGPT thread bridge.
+The project combines two pinned MIT foundations:
+
+- `chicogong/codex-chatgpt-web-orchestrator` for routing, receipts, lifecycle, recovery, and governance.
+- `codex-with-chatgpt` for the C2C control protocol, read-only workspace MCP, OAuth 2.1, pairing, Cloudflare tunnels, execution records, and session recovery.
+
+The Codex In-app Browser is the preferred control surface. A headed system browser is fallback-only and requires explicit user approval.
 
 ## Permanent policy
 
 **ChatGPT Work is forbidden.**
 
-The route parser, adapter manifest validation, state machine, tests, and verifier all reject Work. The two supported modes are:
+The route parser, adapter manifest validation, state machine, tests, MCP policy, and verifier all reject Work. The supported modes are:
 
 - `chat-pro`: architecture analysis, code review, critique, synthesis, and reverse-challenge.
 - `deep-research`: source-heavy research with citations and long-running recovery.
@@ -22,62 +27,84 @@ The route parser, adapter manifest validation, state machine, tests, and verifie
 - Conversation identity recovery without blind resend.
 - `generating`, `complete`, `partial`, `incomplete`, `blocked`, and `unknown` outcomes.
 - Separate raw response, compressed working view, and verification record.
-- Code-review file/line structural checks.
+- Code-review file and line structural checks.
 - Deep Research HTTPS citation checks and semantic-verification handoff.
-- Codex skills for orchestration, Pro analysis, Deep Research, and compression.
-- Offline tests with no browser or ChatGPT account access.
+- Read-only workspace MCP with code, search, git, test, and sanitized execution tools.
+- `INIT -> PLAN -> EXECUTING -> EXECUTED -> REVIEW -> DONE/BLOCKED` governance.
+- Sanitized execution records and HANDOFF support.
+- Read-only external data-source contracts with row, byte, and timeout limits.
+- Offline tests that never open a browser or use a ChatGPT account.
 
 ## Repository layout
 
 ```text
 .codex-plugin/       Codex plugin manifest
 adapters/            Capability manifests
-references/          Bridge, lifecycle, output, and review-only contracts
-schemas/             Public receipt schemas copied from upstream context
+docs/                Phase status, live smoke, and proxy fallback
+examples/            Example manifests and observations
+references/          Bridge, data-plane, lifecycle, and output contracts
+schemas/             Receipt, verification, and read-only data-source schemas
 skills/              Codex skills
-src/ccw/             Local Python orchestration package
+src/ccw/             Local Python governance and integration package
 tests/               Offline unit and CLI tests
-vendor/              Pinned upstream orchestration base
-scripts/             Windows launchers and validation scripts
+vendor/              Pinned governance and C2C bridge sources
+scripts/             Windows launchers, tests, and dependency helpers
 ```
 
 ## Quick start
 
-Run the offline test suite:
+Run the local governance tests:
 
 ```powershell
 .\scripts\test.ps1
 ```
 
-Validate the plugin manifest:
+Run the vendored C2C bridge tests:
+
+```powershell
+.\scripts\test-c2c.ps1
+```
+
+Validate the plugin:
 
 ```powershell
 .\scripts\validate-plugin.ps1
 ```
 
-Detect whether a native adapter is present without probing credentials:
+Check the C2C environment and install the project-local tunnel binary:
 
 ```powershell
-.\ccw.cmd adapter detect --inventory .\examples\inventory.example.json
+.\ccw.cmd c2c detect
+.\ccw.cmd c2c build
+.\scripts\install-cloudflared.ps1
 ```
 
-Run a route plan:
+## Integrated C2C loop
+
+The control plane sends tiny `[C2C]` state messages through the In-app Browser. The data plane exposes read-only workspace MCP tools so ChatGPT can inspect code, diffs, search results, git state, tests, and sanitized execution records itself.
 
 ```powershell
-.\ccw.cmd route plan `
-  --task-kind review `
-  --mode chat-pro `
-  --capabilities .\examples\capabilities.native.json
+.\ccw.cmd c2c exec -- start --tunnel
+.\ccw.cmd c2c exec -- doctor
 ```
 
-Attempting a Work-shaped task fails closed:
+Governance transitions are mirrored locally:
 
 ```powershell
-.\ccw.cmd route plan `
-  --task-kind artifact `
-  --capabilities .\examples\capabilities.native.json
-# exit code 3: ChatGPT Work is permanently disabled in this bridge
+.\ccw.cmd cycle set <run_id> --state INIT --iteration 0 --task-id <task_id>
+.\ccw.cmd cycle set <run_id> --state PLAN --iteration 1
+.\ccw.cmd cycle set <run_id> --state EXECUTING --iteration 1
+.\ccw.cmd cycle record-execution <run_id> `
+  --iteration 1 `
+  --changed-file src/a.ts `
+  --tests "27 passed" `
+  --exit-status ok `
+  --command "pnpm test" `
+  --output-file .\test.log
+.\ccw.cmd cycle set <run_id> --state EXECUTED --iteration 1
 ```
+
+Control messages stay under 1 KB and never contain file bodies, diffs, or logs. Detailed output is stored locally, sanitized, and exposed to ChatGPT only through the read-only data plane.
 
 ## Pro review lifecycle
 
@@ -93,7 +120,7 @@ Attempting a Work-shaped task fails closed:
 # 2. Authorize the exact prompt.
 .\ccw.cmd run authorize <run_id>
 
-# 3. Record read-only native-browser preflight evidence.
+# 3. Record read-only In-app Browser preflight evidence.
 .\ccw.cmd run preflight <run_id> --observation .\observation.json
 
 # 4. Record the single submission intent and acknowledgement.
@@ -113,17 +140,31 @@ Raw ChatGPT output is authoritative. `compressed.json` is only a bounded working
 
 Use `--mode deep-research --task-kind source-research` or `research-report`.
 
-The same receipt and single-submission rules apply. Deep Research runs may wait and reconnect much longer, but a timeout never authorizes a second submission. Capture the complete report and ordinary HTTPS citations before compression.
+The same receipt and single-submission rules apply. Deep Research can run for a long time, but timeout never authorizes a second submission. Capture the complete report and ordinary HTTPS citations before compression.
 
 ## Recovery
-
-When a run is disconnected or ambiguous:
 
 ```powershell
 .\ccw.cmd run recover <run_id> --observation .\recovery.json
 ```
 
-Recovery always prefers the same conversation identity. If the identity is lost and no saved capture exists, the run becomes `unknown`; it is not silently rerun.
+Recovery always prefers the same conversation identity. If identity is lost and no saved capture exists, the run becomes `unknown`; it is never silently rerun.
+
+## Read-only data plane
+
+Workspace MCP is the primary data plane. Optional production data sources must satisfy [references/data-plane.md](references/data-plane.md):
+
+- Read-only views or replicas.
+- OAuth 2.1 for remote endpoints.
+- Hard row, byte, and timeout limits.
+- Sensitive-field redaction and audit logs.
+- No write, shell, commit, deployment, or administrative tools.
+
+Validate an external data-source contract:
+
+```powershell
+.\ccw.cmd data validate --manifest .\examples\readonly-data-source.sqlite.json
+```
 
 ## Adapter contract
 
@@ -139,17 +180,15 @@ Route capability:
 - `chat_pro`
 - `deep_research`
 
-The adapter must not expose Work.
+Adapters must not expose Work. See [references/bridge-contract.md](references/bridge-contract.md).
 
-See [Bridge contract](references/bridge-contract.md) and [Native Codex Browser adapter](references/native-codex-browser.md). A concrete `agent-browser` adapter example is available at `adapters/agent-browser.example.json`.
+## Proxy fallback
 
-## Proxy setup
-
-Prefer the native In-app Browser. Only if it cannot reach the target and the user explicitly approves the fallback, use the `agent-browser` proxy configuration in [docs/proxy.md](docs/proxy.md). Do not launch a headed system browser when the In-app Browser works.
+Prefer the In-app Browser. Only if it cannot reach the target and the user explicitly approves the fallback, use the `agent-browser` proxy configuration in [docs/proxy.md](docs/proxy.md). Do not launch a headed system browser when the In-app Browser works.
 
 ## Live smoke
 
-The real browser/account smoke is intentionally separate from offline tests. Follow [docs/live-smoke.md](docs/live-smoke.md) only with explicit authorization to use the signed-in ChatGPT account.
+Real browser/account smoke is separate from offline tests. Follow [docs/live-smoke.md](docs/live-smoke.md) only with explicit authorization to use the signed-in ChatGPT account.
 
 ## Private data
 

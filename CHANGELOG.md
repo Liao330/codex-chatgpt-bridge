@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Rename the project to `codex-chatgpt-bridge`.
+- Vendor `XiaoDuoYa/codex-with-chatgpt` at `9663b88753e35c76796c5bce000293e0bd22cd9e`.
+- Add `ccw c2c` integration for the C2C bridge, OAuth, read-only MCP, tunnel, session, doctor, and execution-record commands.
+- Add the `INIT -> PLAN -> EXECUTING -> EXECUTED -> REVIEW -> DONE/BLOCKED` governance state machine.
+- Add sanitized execution records and HANDOFF support.
+- Add read-only external data-source contracts and validation.
+- Keep receipt, prompt fingerprint, single submission, recovery, compression, verification, and the permanent Work ban.
+- Prefer the In-app Browser and explicitly demote headed browser usage to an approved fallback.
+
 ## 0.1.1
 
 - Add English and Simplified Chinese README files with top-level language switching.

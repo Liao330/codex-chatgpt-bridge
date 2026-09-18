@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Read-only Data Source",
+  "type": "object",
+  "required": ["id", "kind", "read_only", "auth", "tools", "limits"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"},
+    "kind": {"enum": ["sqlite", "json_file", "http_readonly"]},
+    "read_only": {"const": true},
+    "url": {"type": "string"},
+    "auth": {"type": "object", "required": ["type"], "properties": {"type": {"enum": ["oauth2", "local_only"]}}, "additionalProperties": true},
+    "tools": {"type": "array", "minItems": 1, "items": {"oneOf": [{"type": "string"}, {"type": "object", "required": ["name"]}]}},
+    "limits": {"type": "object", "required": ["max_rows", "timeout_ms", "max_bytes"], "properties": {"max_rows": {"type": "integer", "minimum": 1}, "timeout_ms": {"type": "integer", "minimum": 1}, "max_bytes": {"type": "integer", "minimum": 1}}}
+  },
+  "additionalProperties": true
+}
