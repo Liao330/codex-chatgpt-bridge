@@ -64,6 +64,8 @@ export function parseQuickTunnelUrl(line: string): string | null {
 export interface CloudflaredQuickTunnelOptions {
   startTimeoutMs?: number;
   healthGraceMs?: number;
+  startAttempts?: number;
+  retryDelayMs?: number;
   spawnImpl?: (
     command: string,
     args: string[],
@@ -84,6 +86,8 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
   private lastError: string | null = null;
   private readonly startTimeoutMs: number;
   private readonly healthGraceMs: number;
+  private readonly startAttempts: number;
+  private readonly retryDelayMs: number;
   private readonly spawnImpl: NonNullable<CloudflaredQuickTunnelOptions["spawnImpl"]>;
   private readonly fetchImpl: NonNullable<CloudflaredQuickTunnelOptions["fetchImpl"]>;
   private starting: Promise<string> | null = null;
@@ -98,6 +102,12 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
       options.startTimeoutMs ?? envMs("C2C_TUNNEL_START_TIMEOUT_MS") ?? 45_000;
     this.healthGraceMs =
       options.healthGraceMs ?? envMs("C2C_TUNNEL_HEALTH_GRACE_MS") ?? 15_000;
+    this.startAttempts = Math.max(
+      1,
+      options.startAttempts ?? envMs("C2C_TUNNEL_START_ATTEMPTS") ?? 3
+    );
+    this.retryDelayMs =
+      options.retryDelayMs ?? envMs("C2C_TUNNEL_RETRY_DELAY_MS") ?? 2_000;
     this.spawnImpl = options.spawnImpl ?? ((command, args, spawnOptions) => spawn(command, args, spawnOptions));
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
   }
@@ -109,13 +119,36 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
   async start(localPort: number): Promise<string> {
     if (this.child && this.url) return this.url;
     if (this.starting) return this.starting;
-    const starting = this.startProcess(localPort);
+    const starting = this.startWithRetries(localPort);
     this.starting = starting;
     try {
       return await starting;
     } finally {
       if (this.starting === starting) this.starting = null;
     }
+  }
+
+  /**
+   * Cloudflare's account-less quick-tunnel API is intermittently slow (observed
+   * "Client.Timeout exceeded while awaiting headers" while the same POST over
+   * HTTP/1.1 succeeded in ~4s), so a single failed spawn must not fail the start.
+   */
+  private async startWithRetries(localPort: number): Promise<string> {
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= this.startAttempts; attempt += 1) {
+      try {
+        return await this.startProcess(localPort);
+      } catch (error) {
+        lastError = error;
+        const detail = error instanceof Error ? error.message : String(error);
+        if (attempt >= this.startAttempts) break;
+        this.logger.warn(
+          `Quick tunnel attempt ${attempt}/${this.startAttempts} failed: ${detail} - retrying`
+        );
+        await new Promise((resolve) => setTimeout(resolve, this.retryDelayMs));
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
   }
 
   private startProcess(localPort: number): Promise<string> {

@@ -48,6 +48,8 @@ function setupTunnel(fetchImpl: FetchImpl, startTimeoutMs = 1_000) {
     spawnImpl,
     fetchImpl,
     startTimeoutMs,
+    // Existing cases assert single-attempt semantics; retry behaviour has its own test.
+    startAttempts: 1,
   });
   return { child, spawnImpl, tunnel };
 }
@@ -116,6 +118,29 @@ describe("CloudflaredQuickTunnel", () => {
       signal: expect.any(AbortSignal),
     });
     expect(tunnel.status()).toMatchObject({ running: true, url: QUICK_URL });
+    await tunnel.stop();
+  });
+
+  it("retries the spawn when cloudflared exits before establishing a tunnel", async () => {
+    const first = new FakeCloudflaredProcess();
+    const second = new FakeCloudflaredProcess();
+    const queue: FakeCloudflaredProcess[] = [first, second];
+    const spawnImpl = vi.fn(() => queue.shift() as unknown as ChildProcess);
+    const tunnel = new CloudflaredQuickTunnel(undefined, "cloudflared", {
+      spawnImpl,
+      fetchImpl: async () => healthResponse(),
+      startTimeoutMs: 2_000,
+      startAttempts: 2,
+      retryDelayMs: 1,
+    });
+
+    const starting = tunnel.start(3333);
+    first.emit("exit", 1, null);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    announceUrl(second);
+
+    await expect(starting).resolves.toBe(QUICK_URL);
+    expect(spawnImpl).toHaveBeenCalledTimes(2);
     await tunnel.stop();
   });
 
