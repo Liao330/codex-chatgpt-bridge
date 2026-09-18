@@ -31,3 +31,23 @@ Re-apply the patches below after syncing an upstream base.
   the `registeredAt` bookkeeping inside `startProcess()`, and the extra test
   ("accepts a registered connection when the local health probe cannot resolve the
   public name").
+
+### 2. Retry a failed quick-tunnel spawn
+
+- File: `src/tunnel/cloudflared.ts`, `tests/tunnel.test.ts`
+- Symptom: `ccw c2c start --tunnel` failed with `cloudflared exited (code 1) before
+  establishing a tunnel`, and cloudflared's stderr said
+  `failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel":
+  context deadline exceeded (Client.Timeout exceeded while awaiting headers)`.
+- Cause: Cloudflare's account-less quick-tunnel API is intermittently slow. The very
+  same POST completed in ~4s over HTTP/1.1 (curl) while cloudflared's HTTP/2 client
+  stalled, so a single attempt failed the whole start even though the next would work.
+- Change: `start()` retries `startProcess()` up to `C2C_TUNNEL_START_ATTEMPTS` times
+  with `C2C_TUNNEL_RETRY_DELAY_MS` between attempts, and only then throws the last
+  error.
+- Environment:
+  - `C2C_TUNNEL_START_ATTEMPTS` - default `3`.
+  - `C2C_TUNNEL_RETRY_DELAY_MS` - default `2000`.
+- Test note: existing cases keep single-attempt semantics through `setupTunnel()`;
+  retry behaviour has its own case ("retries the spawn when cloudflared exits before
+  establishing a tunnel").
