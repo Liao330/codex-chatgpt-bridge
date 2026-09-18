@@ -40,7 +40,7 @@
 ```text
 .codex-plugin/       Codex 插件清单
 adapters/            Adapter 能力清单
-docs/                Phase 状态、Live smoke、代理 fallback
+docs/                部署（中继 + 开机自启）、Live smoke、Vendor 补丁
 examples/            示例清单和 observation
 references/          Bridge、数据面、生命周期和输出契约
 schemas/             Receipt、核验和只读数据源 schema
@@ -71,13 +71,14 @@ scripts/             Windows 启动、测试和依赖脚本
 .\scripts\validate-plugin.ps1
 ```
 
-检查 C2C 环境并安装项目内置的 Tunnel 二进制：
+检查 C2C 环境并构建 bridge：
 
 ```powershell
 .\ccw.cmd c2c detect
 .\ccw.cmd c2c build
-.\scripts\install-cloudflared.ps1
 ```
+
+用中继把它暴露给 ChatGPT：[docs/deployment.md](docs/deployment.md)。
 
 ## 集成后的 C2C 闭环
 
@@ -182,9 +183,15 @@ workspace MCP 是主要数据面。可选生产数据源必须满足 [references
 
 Adapter 不得暴露 Work。参见 [references/bridge-contract.md](references/bridge-contract.md)。
 
-## 代理 fallback
+## 部署
 
-优先使用 In-app Browser。只有当它无法访问目标且用户明确同意 fallback 时，才使用 [docs/proxy.md](docs/proxy.md) 中的 `agent-browser` 代理配置。In-app Browser 可用时，不得启动 headed 系统浏览器。
+bridge 只监听本机回环地址。用中继把它暴露出去（地址永久固定、本机不开任何入站端口）：[docs/deployment.md](docs/deployment.md)。
+
+- `deploy/relay-setup.sh`：准备中继机（Tailscale Funnel）。
+- `deploy/install-client.ps1`：准备一台要跑 bridge 的机器。
+- `scripts/startup.ps1`：开机守护，同时保活 **bridge 和反向隧道**，重启后无需手动操作。
+
+访问 ChatGPT 页面一律使用 In-app Browser，不要启动 headed 系统浏览器。
 
 ## Live smoke
 

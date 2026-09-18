@@ -40,7 +40,7 @@ The route parser, adapter manifest validation, state machine, tests, MCP policy,
 ```text
 .codex-plugin/       Codex plugin manifest
 adapters/            Capability manifests
-docs/                Phase status, live smoke, and proxy fallback
+docs/                Deployment, live smoke, and vendor patches
 examples/            Example manifests and observations
 references/          Bridge, data-plane, lifecycle, and output contracts
 schemas/             Receipt, verification, and read-only data-source schemas
@@ -71,13 +71,14 @@ Validate the plugin:
 .\scripts\validate-plugin.ps1
 ```
 
-Check the C2C environment and install the project-local tunnel binary:
+Check the C2C environment and build the bridge:
 
 ```powershell
 .\ccw.cmd c2c detect
 .\ccw.cmd c2c build
-.\scripts\install-cloudflared.ps1
 ```
+
+Expose it to ChatGPT with the relay: [docs/deployment.md](docs/deployment.md).
 
 ## Integrated C2C loop
 
@@ -182,9 +183,15 @@ Route capability:
 
 Adapters must not expose Work. See [references/bridge-contract.md](references/bridge-contract.md).
 
-## Proxy fallback
+## Deployment
 
-Prefer the In-app Browser. Only if it cannot reach the target and the user explicitly approves the fallback, use the `agent-browser` proxy configuration in [docs/proxy.md](docs/proxy.md). Do not launch a headed system browser when the In-app Browser works.
+The bridge listens on loopback only. Expose it with the relay (one stable public URL, no inbound ports): [docs/deployment.md](docs/deployment.md).
+
+- `deploy/relay-setup.sh` prepares a relay host (Tailscale Funnel).
+- `deploy/install-client.ps1` prepares a machine that runs a bridge.
+- `scripts/startup.ps1` is the logon supervisor: it keeps the bridge **and** the reverse tunnel alive, so a reboot needs no manual step.
+
+Always use the In-app Browser for ChatGPT pages. Do not launch a headed system browser.
 
 ## Live smoke
 

@@ -5,7 +5,7 @@
 #   sudo bash relay-setup.sh --port 8081 --hostname codex-c2c-vps
 #
 # The client keeps  <relay>:127.0.0.1:<port>  wired to its local bridge with an
-# SSH reverse tunnel (scripts/vps-tunnel.ps1).
+# SSH reverse tunnel kept alive by scripts/startup.ps1 on the client machine.
 set -euo pipefail
 
 PORT=8081
@@ -50,5 +50,5 @@ echo
 echo "== done. Public URL:"
 tailscale funnel status | head -6
 echo
-echo "Client next step: point scripts/vps-tunnel.ps1 at this host (ssh alias) and run"
+echo "Client next step: add this host as the ssh alias 'c2c-relay' and run"
 echo "  deploy/install-client.ps1 -WorkspacePath <path>"

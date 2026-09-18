@@ -1,5 +1,12 @@
 # Changelog
 
+- Remove the experimental tunnel paths and keep one supported deployment story:
+  dropped `deploy/cf-quick-tunnel.service`, `scripts/install-cloudflared.ps1`,
+  `scripts/vps-tunnel.ps1`, `docs/proxy.md`, and `docs/phase-status.md`; added
+  `docs/deployment.md`. `scripts/startup.ps1` now supervises both the bridge and the
+  reverse tunnel at logon, so a reboot needs no manual step (verified by killing both
+  and letting the supervisor restore them).
+
 ## Unreleased
 
 - Fix `c2c start --tunnel` failing with `Tunnel start timed out` on networks where the
@@ -36,8 +43,7 @@
 - Add prompt fingerprints, single-submission state machine, recovery, raw/compressed output separation, and local verification.
 - Add offline tests and Windows launchers.
 
-- Add the VPS relay path for networks where Cloudflare Quick Tunnels cannot hold a
-  connection: `scripts/vps-tunnel.ps1` (local SSH reverse-tunnel watchdog, started at
-  logon), `deploy/cf-quick-tunnel.service` (relay-side cloudflared), and
-  `docs/vps-relay.md`. Verified end to end: ChatGPT Web called `workspace_info` and
+- Add the relay path for networks where Cloudflare Quick Tunnels cannot hold a
+  connection: `scripts/startup.ps1` (logon supervisor for the bridge and the reverse
+  tunnel) and `docs/deployment.md`. Verified end to end: ChatGPT Web called `workspace_info` and
   `read_file` through the relay and returned the workspace name and file contents.
