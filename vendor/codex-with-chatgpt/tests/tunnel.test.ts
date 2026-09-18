@@ -119,6 +119,27 @@ describe("CloudflaredQuickTunnel", () => {
     await tunnel.stop();
   });
 
+  it("accepts a registered connection when the local health probe cannot resolve the public name", async () => {
+    const child = new FakeCloudflaredProcess();
+    const spawnImpl = vi.fn(() => child as unknown as ChildProcess);
+    const fetchImpl = vi.fn(async () => {
+      throw Object.assign(new Error("fetch failed"), { cause: { code: "ENOTFOUND" } });
+    });
+    const tunnel = new CloudflaredQuickTunnel(undefined, "cloudflared", {
+      spawnImpl,
+      fetchImpl,
+      startTimeoutMs: 5_000,
+      healthGraceMs: 0,
+    });
+    const starting = tunnel.start(3333);
+    announceUrl(child);
+    child.stderr.write("INF Registered tunnel connection connIndex=0\n");
+
+    await expect(starting).resolves.toBe(QUICK_URL);
+    expect(tunnel.status()).toMatchObject({ running: true, url: QUICK_URL });
+    await tunnel.stop();
+  });
+
   it("passes --protocol when C2C_TUNNEL_PROTOCOL is set", async () => {
     vi.stubEnv("C2C_TUNNEL_PROTOCOL", "http2");
     const { child, spawnImpl, tunnel } = setupTunnel(async () => healthResponse());

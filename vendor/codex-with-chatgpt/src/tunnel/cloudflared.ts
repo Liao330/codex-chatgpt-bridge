@@ -11,6 +11,15 @@ const QUICK_TUNNEL_URL_RE = /https:\/\/[^\s|]+/gi;
 const QUICK_TUNNEL_HOST_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)\.trycloudflare\.com$/i;
 const HEALTH_CHECK_INTERVAL_MS = 250;
 const HEALTH_CHECK_TIMEOUT_MS = 5_000;
+const REGISTERED_CONNECTION_RE = /registered tunnel connection/i;
+
+/** Read an optional millisecond value from the environment. */
+function envMs(name: string): number | null {
+  const raw = process.env[name]?.trim();
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
 
 function isBridgeHealth(payload: unknown): boolean {
   if (!payload || typeof payload !== "object") return false;
@@ -54,6 +63,7 @@ export function parseQuickTunnelUrl(line: string): string | null {
 
 export interface CloudflaredQuickTunnelOptions {
   startTimeoutMs?: number;
+  healthGraceMs?: number;
   spawnImpl?: (
     command: string,
     args: string[],
@@ -73,6 +83,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
   private url: string | null = null;
   private lastError: string | null = null;
   private readonly startTimeoutMs: number;
+  private readonly healthGraceMs: number;
   private readonly spawnImpl: NonNullable<CloudflaredQuickTunnelOptions["spawnImpl"]>;
   private readonly fetchImpl: NonNullable<CloudflaredQuickTunnelOptions["fetchImpl"]>;
   private starting: Promise<string> | null = null;
@@ -83,7 +94,10 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
     private readonly binaryOverride?: string,
     options: CloudflaredQuickTunnelOptions = {}
   ) {
-    this.startTimeoutMs = options.startTimeoutMs ?? 45_000;
+    this.startTimeoutMs =
+      options.startTimeoutMs ?? envMs("C2C_TUNNEL_START_TIMEOUT_MS") ?? 45_000;
+    this.healthGraceMs =
+      options.healthGraceMs ?? envMs("C2C_TUNNEL_HEALTH_GRACE_MS") ?? 15_000;
     this.spawnImpl = options.spawnImpl ?? ((command, args, spawnOptions) => spawn(command, args, spawnOptions));
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
   }
@@ -131,6 +145,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
       this.lastError = null;
       let settled = false;
       let candidateUrl: string | null = null;
+      let registeredAt: number | null = null;
       let cancel: (() => void) | null = null;
       let timeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -210,6 +225,20 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
             this.lastError = error instanceof Error ? error.message : String(error);
           }
           if (settled) return;
+          // Some networks cannot resolve a brand-new *.trycloudflare.com name from the
+          // local machine (ENOTFOUND) even though the public URL works. Once cloudflared
+          // reports a registered connection, stop blocking on the local probe.
+          if (
+            registeredAt !== null &&
+            this.healthGraceMs >= 0 &&
+            Date.now() - registeredAt >= this.healthGraceMs
+          ) {
+            this.logger.warn(
+              `Quick tunnel ${publicUrl} is registered with Cloudflare but the local health check could not confirm it (${this.lastError ?? "unknown error"}); continuing anyway`
+            );
+            ready(publicUrl);
+            return;
+          }
           await new Promise((resolveWait) => setTimeout(resolveWait, HEALTH_CHECK_INTERVAL_MS));
         }
       };
@@ -224,6 +253,9 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
       const scan = (stream: NodeJS.ReadableStream): void => {
         const rl = readline.createInterface({ input: stream });
         rl.on("line", (line) => {
+          if (REGISTERED_CONNECTION_RE.test(line) && registeredAt === null) {
+            registeredAt = Date.now();
+          }
           const url = parseQuickTunnelUrl(line);
           if (url && !candidateUrl) {
             candidateUrl = url;

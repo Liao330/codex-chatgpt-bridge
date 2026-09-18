@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Fix `c2c start --tunnel` failing with `Tunnel start timed out` on networks where the
+  local machine cannot resolve a brand-new `*.trycloudflare.com` name: once cloudflared
+  reports a registered connection the quick-tunnel provider no longer blocks forever on
+  the local `/health` probe. See `docs/vendor-patches.md`.
+- Add `C2C_TUNNEL_START_TIMEOUT_MS` and `C2C_TUNNEL_HEALTH_GRACE_MS` knobs.
+- Add `scripts/c2c-data-plane-smoke.mjs` for end-to-end read-only data-plane checks
+  (OAuth discovery, PKCE pairing, tool listing, `workspace_info`, `read_file`, git and
+  execution tools, `.env` denial).
 ## 0.2.0
 
 - Rename the project to `codex-chatgpt-bridge`.
@@ -25,3 +35,4 @@
 - Permanently reject `work` at routing, adapter validation, state, and verification layers.
 - Add prompt fingerprints, single-submission state machine, recovery, raw/compressed output separation, and local verification.
 - Add offline tests and Windows launchers.
+

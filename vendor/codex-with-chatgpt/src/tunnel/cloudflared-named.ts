@@ -7,6 +7,14 @@ import { tunnelProtocolArgs } from "./protocol.js";
 import type { TunnelDoctorReport, TunnelProvider, TunnelStatus } from "./provider.js";
 
 const CONNECTED_RE = /registered tunnel connection/i;
+
+/** Read an optional millisecond value from the environment. */
+function envMs(name: string): number | null {
+  const raw = process.env[name]?.trim();
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
 const HOSTNAME_RE = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
 export interface CloudflaredNamedTunnelOptions {
@@ -52,7 +60,7 @@ export class CloudflaredNamedTunnel implements TunnelProvider {
     this.hostname = normalizeNamedTunnelHostname(opts.hostname);
     this.logger = opts.logger ?? nullLogger;
     this.binaryOverride = opts.binaryOverride;
-    this.startTimeoutMs = opts.startTimeoutMs ?? 45_000;
+    this.startTimeoutMs = opts.startTimeoutMs ?? envMs("C2C_TUNNEL_START_TIMEOUT_MS") ?? 45_000;
   }
 
   private binary(): string | null {
