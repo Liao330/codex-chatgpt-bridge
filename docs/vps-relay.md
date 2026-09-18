@@ -59,3 +59,26 @@ node scripts/c2c-data-plane-smoke.mjs https://codex-c2c-vps.tail8496c3.ts.net <p
 
 Last verified: ChatGPT Web called `workspace_info` and `read_file` through the relay and
 answered `e2e-workspace` / `hello from C2C e2e`.
+
+## One-click deploy
+
+**Relay host (once per relay):**
+
+```bash
+sudo bash deploy/relay-setup.sh --port 8081 --hostname codex-c2c-vps
+# then enable HTTPS Certificates + Funnel for the tailnet in the admin console and re-run
+```
+
+**New device (per machine):**
+
+```powershell
+# once: put the relay in ~/.ssh/config as alias "c2c-relay" and copy your public key over
+powershell -ExecutionPolicy Bypass -File deploy\install-client.ps1 -WorkspacePath <absolute path to the repo>
+```
+
+The installer verifies node/python/ssh, checks key auth to the relay, installs the
+logon watchdog, starts the C2C bridge for that workspace, checks the relay hop, and
+prints the exact ChatGPT-side steps (create connector -> OAuth -> `c2c pair` ->
+`c2c session set --project-url ...`).
+
+Both scripts are idempotent: re-running them reuses the running watchdog and bridge.
