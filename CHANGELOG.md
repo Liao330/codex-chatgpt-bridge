@@ -36,3 +36,8 @@
 - Add prompt fingerprints, single-submission state machine, recovery, raw/compressed output separation, and local verification.
 - Add offline tests and Windows launchers.
 
+- Add the VPS relay path for networks where Cloudflare Quick Tunnels cannot hold a
+  connection: `scripts/vps-tunnel.ps1` (local SSH reverse-tunnel watchdog, started at
+  logon), `deploy/cf-quick-tunnel.service` (relay-side cloudflared), and
+  `docs/vps-relay.md`. Verified end to end: ChatGPT Web called `workspace_info` and
+  `read_file` through the relay and returned the workspace name and file contents.
