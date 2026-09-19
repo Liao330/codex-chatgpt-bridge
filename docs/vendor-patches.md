@@ -51,3 +51,25 @@ Re-apply the patches below after syncing an upstream base.
 - Test note: existing cases keep single-attempt semantics through `setupTunnel()`;
   retry behaviour has its own case ("retries the spawn when cloudflared exits before
   establishing a tunnel").
+
+### 3. Multi-repo workspace roots
+
+- Files: `src/mcp/server.ts`, `tests/multi-repo.test.ts`
+- Why: one bridge per repository does not scale (an SSH tunnel + a connector + a
+  OAuth pairing per repo, and Funnel only publishes three ports). Pointing the bridge
+  at a parent directory such as `E:\github_code` gives one connector for every
+  project, but upstream pins the git tools to `workspace.root`, so `git_status` /
+  `git_diff` fail when the root itself is not a repository.
+- Change:
+  - `git_status` and `git_diff` accept an optional `repo` argument: a
+    **workspace-relative** directory of the repository to inspect (`.` = the root).
+    The directory is resolved through `Workspace.resolve()`, so containment
+    (`PATH_OUTSIDE_WORKSPACE`) and the sensitive-file rules still apply.
+  - `git_diff`'s `path` argument is resolved **relative to the selected repo**, and a
+    path that escapes it is rejected.
+  - `workspace_info` now returns `repos`: the git repositories discovered under the
+    root (two levels deep), so a client can pick one by name.
+- Usage: `git_status {repo: "financial-system"}`,
+  `git_diff {repo: "gogo-resolve-migration-worktree-...", mode: "unstaged"}`.
+- Note: with a multi-repo root the root's own `git.isRepo` is usually false; that is
+  expected - use `repos` plus the `repo` argument.

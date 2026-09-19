@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
@@ -48,6 +50,55 @@ function requireScope(authInfo: AuthInfo | undefined, scope: string): ToolResult
   return null;
 }
 
+/**
+ * Resolve an optional workspace-relative directory that holds a git repository.
+ * "." (or an omitted value) means the workspace root itself. Any other value must
+ * stay inside the workspace - Workspace.resolve enforces containment and the
+ * sensitive-file rules - so a multi-repo root can be inspected safely.
+ */
+function resolveGitRoot(
+  workspace: Workspace,
+  repo: string | undefined
+): { root: string; repoRel: string | null } {
+  const requested = (repo ?? ".").trim() || ".";
+  if (requested === "." || requested === "./") return { root: workspace.root, repoRel: null };
+  const { abs, rel } = workspace.resolve(requested);
+  return { root: abs, repoRel: rel };
+}
+
+/** Git repositories under this workspace, so a client can discover them by name. */
+function listWorkspaceRepos(workspace: Workspace): string[] {
+  const found: string[] = [];
+  const consider = (rel: string, abs: string): void => {
+    try {
+      if (fs.existsSync(path.join(abs, ".git"))) found.push(rel);
+    } catch {
+      // ignore unreadable entries
+    }
+  };
+  consider(".", workspace.root);
+  let top: fs.Dirent[] = [];
+  try {
+    top = fs.readdirSync(workspace.root, { withFileTypes: true });
+  } catch {
+    return found;
+  }
+  for (const entry of top) {
+    if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name === "node_modules") continue;
+    const abs = path.join(workspace.root, entry.name);
+    consider(entry.name, abs);
+    try {
+      for (const child of fs.readdirSync(abs, { withFileTypes: true })) {
+        if (!child.isDirectory() || child.name.startsWith(".") || child.name === "node_modules") continue;
+        consider(`${entry.name}/${child.name}`, path.join(abs, child.name));
+      }
+    } catch {
+      // ignore unreadable entries
+    }
+  }
+  return found.slice(0, 200);
+}
+
 const gitIdentityOutputSchema = z.object({
   isRepo: z.boolean(),
   branch: z.string().nullable(),
@@ -65,6 +116,7 @@ const workspaceInfoOutputSchema = {
   packageManager: z.string().nullable(),
   scripts: z.record(z.string()),
   git: gitIdentityOutputSchema,
+  repos: z.array(z.string()),
 };
 
 const directoryEntryOutputSchema = z.object({
@@ -212,6 +264,7 @@ export function createMcpServer(ctx: McpContext): McpServer {
           workspaceId: workspace.id,
           workspaceName: workspace.name,
           rootAlias: "workspace:/",
+          repos: listWorkspaceRepos(workspace),
           ...project,
           git: {
             isRepo: git.isRepo,
@@ -312,16 +365,22 @@ export function createMcpServer(ctx: McpContext): McpServer {
     "git_status",
     {
       title: "Git status",
-      description: `Structured git status of the workspace: branch, staged/unstaged/untracked files. ${UNTRUSTED_NOTE}`,
-      inputSchema: {},
+      description: `Structured git status of the workspace: branch, staged/unstaged/untracked files. Set repo to a workspace-relative directory when the root contains several repositories. ${UNTRUSTED_NOTE}`,
+      inputSchema: {
+        repo: z
+          .string()
+          .default(".")
+          .describe("Workspace-relative repository directory; '.' means the workspace root"),
+      },
       outputSchema: gitStatusOutputSchema,
       annotations: { readOnlyHint: true },
     },
-    async (_args, extra) => {
+    async (args, extra) => {
       const denied = requireScope(extra.authInfo, "git.read");
       if (denied) return denied;
       try {
-        return okStructured(gitStatus(workspace));
+        const { root, repoRel } = resolveGitRoot(workspace, args.repo);
+        return okStructured(gitStatus(repoRel ? root : workspace));
       } catch (error) {
         return mapError(error);
       }
@@ -337,7 +396,11 @@ export function createMcpServer(ctx: McpContext): McpServer {
         `(working tree vs HEAD). When hasMore is true, call again with offset=nextOffset. ${UNTRUSTED_NOTE}`,
       inputSchema: {
         mode: z.enum(["unstaged", "staged", "head"]).default("unstaged"),
-        path: z.string().optional().describe("Limit the diff to one workspace-relative path"),
+        repo: z
+          .string()
+          .default(".")
+          .describe("Workspace-relative repository directory; '.' means the workspace root"),
+        path: z.string().optional().describe("Limit the diff to one path, relative to repo"),
         offset: z.number().int().min(0).default(0).describe("Byte offset for pagination"),
         max_bytes: z.number().int().min(1024).max(262144).default(65536),
       },
@@ -348,13 +411,18 @@ export function createMcpServer(ctx: McpContext): McpServer {
       const denied = requireScope(extra.authInfo, "git.read");
       if (denied) return denied;
       try {
+        const { root, repoRel } = resolveGitRoot(workspace, args.repo);
         let relPath: string | undefined;
         if (args.path) {
-          relPath = workspace.resolve(args.path).rel;
+          const { abs, rel } = workspace.resolve(repoRel ? `${repoRel}/${args.path}` : args.path);
+          relPath = repoRel ? path.relative(root, abs).split(path.sep).join("/") : rel;
+          if (!relPath || relPath.startsWith("..")) {
+            throw new WorkspaceError("PATH_OUTSIDE_WORKSPACE", "Diff path escapes the selected repository.");
+          }
         }
         return okStructured(
           gitDiff(
-            workspace,
+            repoRel ? root : workspace,
             { mode: args.mode as DiffMode, offset: args.offset, maxBytes: args.max_bytes },
             relPath
           )
