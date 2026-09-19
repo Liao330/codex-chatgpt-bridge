@@ -191,6 +191,8 @@ The bridge listens on loopback only. Expose it with the relay (one stable public
 - `deploy/install-client.ps1` prepares a machine that runs a bridge.
 - `scripts/startup.ps1` is the logon supervisor: it keeps the bridge **and** the reverse tunnel alive, so a reboot needs no manual step.
 
+One workspace can cover many repositories (point the bridge root at their parent directory): `workspace_info` lists them and `git_status`/`git_diff` take a `repo` argument. See [docs/deployment.md](docs/deployment.md).
+
 Always use the In-app Browser for ChatGPT pages. Do not launch a headed system browser.
 
 ## Live smoke

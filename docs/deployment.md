@@ -88,6 +88,49 @@ ChatGPT account**. Isolation options for the relay:
 The OAuth token lives in the bridge state of the machine that runs it. A different
 machine serving the same workspace needs its own pairing (30 seconds: `c2c pair`).
 
+## One workspace for every repository
+
+Rooting the bridge at a parent directory (for example `E:\github_code`) gives **one
+connector for every project** on the machine:
+
+```
+workspace root  E:\github_code        <- one bridge, one connector, one ChatGPT Project
+  |- financial-system                 (git repo)
+  |- gogo-resolve-migration           (git repo)
+  |- gogo-resolve-migration-...       (worktrees of the same repo)
+  |- ...
+```
+
+- `workspace_info` returns `repos`: every git repository found under the root.
+- `git_status {repo: "<name>"}` and `git_diff {repo: "<name>", mode: "unstaged"}`
+  scope the git tools to one repository; `path` is relative to that repo.
+- `read_file` / `list_directory` / `search_workspace` take workspace-relative paths,
+  so `financial-system/src/app.py` works for any repository.
+- Containment is unchanged: anything that escapes the root is rejected with
+  `PATH_OUTSIDE_WORKSPACE`, and sensitive files stay denied.
+
+Trade-off: one connector means one OAuth grant covering every repository below the
+root. Run separate workspaces (separate ports + connectors) for projects that must
+stay isolated.
+
+### If the connector says "Unknown client"
+
+ChatGPT caches one OAuth client registration per connector, and the bridge keeps those
+registrations per workspace under
+`%LOCALAPPDATA%\codex-with-chatgpt\auth\<workspaceId>.json`. After the workspace root
+changes, the new store is empty and the authorize page answers *"Unknown client. Please
+reconnect from ChatGPT."* Copy the client registrations over (tokens are workspace-bound
+and can be dropped):
+
+```powershell
+# copy "clients" from the old store, keep "tokens" empty
+# <old-id> -> <new-id> from: ccw.cmd c2c exec -- status -w <workspace> --json
+```
+
+Then restart the bridge (so the store is re-read) and press **Reconnect** on the
+connector page. The tool list is refreshed at the same time, which is required after
+upgrading the bridge (for example when the git tools gained the `repo` argument).
+
 ## Relay self-check
 
 `deploy/relay-selfcheck.sh` verifies the three hops **from the relay's point of view**:

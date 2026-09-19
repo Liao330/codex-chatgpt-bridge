@@ -191,6 +191,8 @@ bridge 只监听本机回环地址。用中继把它暴露出去（地址永久�
 - `deploy/install-client.ps1`：准备一台要跑 bridge 的机器。
 - `scripts/startup.ps1`：开机守护，同时保活 **bridge 和反向隧道**，重启后无需手动操作。
 
+一个工作区可以覆盖多个仓库（bridge 根目录设为父目录即可）：`workspace_info` 会返回仓库列表，`git_status`/`git_diff` 用 `repo` 参数选择仓库。详见 [docs/deployment.md](docs/deployment.md)。
+
 访问 ChatGPT 页面一律使用 In-app Browser，不要启动 headed 系统浏览器。
 
 ## Live smoke
