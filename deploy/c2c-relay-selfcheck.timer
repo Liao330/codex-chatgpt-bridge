@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Codex C2C bridge relay self-check every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=c2c-relay-selfcheck.service
+
+[Install]
+WantedBy=timers.target

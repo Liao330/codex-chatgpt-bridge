@@ -1,0 +1,7 @@
+[Unit]
+Description=Codex C2C bridge relay self-check
+After=network-online.target tailscaled.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/c2c-relay-selfcheck.sh 8081

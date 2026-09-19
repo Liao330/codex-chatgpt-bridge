@@ -88,6 +88,28 @@ ChatGPT account**. Isolation options for the relay:
 The OAuth token lives in the bridge state of the machine that runs it. A different
 machine serving the same workspace needs its own pairing (30 seconds: `c2c pair`).
 
+## Relay self-check
+
+`deploy/relay-selfcheck.sh` verifies the three hops **from the relay's point of view**:
+the client tunnel port is listening, Funnel still points at it, and the bridge answers
+`/health`. Install it together with the shipped systemd timer (every 5 minutes):
+
+```bash
+scp deploy/relay-selfcheck.sh <relay>:/usr/local/bin/c2c-relay-selfcheck.sh
+scp deploy/c2c-relay-selfcheck.service deploy/c2c-relay-selfcheck.timer <relay>:/etc/systemd/system/
+ssh <relay> "chmod +x /usr/local/bin/c2c-relay-selfcheck.sh && systemctl daemon-reload && systemctl enable --now c2c-relay-selfcheck.timer"
+```
+
+Output goes to stdout and to syslog:
+
+```bash
+journalctl -t c2c-relay-selfcheck -n 20      # PASS / FAIL lines
+/usr/local/bin/c2c-relay-selfcheck.sh 8081   # run on demand, non-zero exit when degraded
+```
+
+Typical failures it catches: the client machine is off (port not listening), Funnel lost
+its mapping, or the bridge process died (health probe fails).
+
 ## Verify
 
 ```powershell
