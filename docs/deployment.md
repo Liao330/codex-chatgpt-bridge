@@ -153,6 +153,37 @@ journalctl -t c2c-relay-selfcheck -n 20      # PASS / FAIL lines
 Typical failures it catches: the client machine is off (port not listening), Funnel lost
 its mapping, or the bridge process died (health probe fails).
 
+## Wire it into Codex (make it part of the normal flow)
+
+The bridge runs in the background; Codex also has to know **when** to use it. Two
+one-time steps per machine:
+
+1. Install the skills into the Codex home:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File deploy\install-codex-skills.ps1
+   ```
+
+   It copies `skills/*` into `%USERPROFILE%\.codex\skills` and rewrites the
+   repo-relative `.\ccw.cmd` references to this checkout, because global skills run
+   from arbitrary repositories.
+
+2. Add a short section to `%USERPROFILE%\.codex\AGENTS.md` with the endpoint, the
+   connector name and the trigger policy. Recommended policy:
+
+   | Situation | Behaviour |
+   |---|---|
+   | The user asks ("review this with GPT", "deep research", "challenge this") | Use it directly |
+   | High-risk change: architecture, cross-module refactor, migration, security | Use it before implementing |
+   | A substantial feature just landed | **Offer** a review, do not auto-run |
+   | Trivial or mechanical edits, low risk, not requested | Do not use it |
+
+   Hard rules to repeat in AGENTS.md: ChatGPT is read-only, Work is forbidden, never
+   paste file bodies/diffs/logs into the chat, and show the outgoing prompt to the
+   user before submitting unless they already said "just send it".
+
+Without step 2 the skills exist but nothing invokes them: the loop stays manual.
+
 ## Verify
 
 ```powershell
