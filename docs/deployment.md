@@ -21,6 +21,22 @@ port and the SSH tunnel carries it back to your machine.
   each time.
 - The relay never stores the workspace: it only forwards bytes to the SSH tunnel.
 
+## One command (once the relay exists)
+
+```powershell
+# prerequisites: ssh alias "c2c-relay" in ~/.ssh/config + your public key on the relay
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath E:\github_code
+```
+
+It runs, in order:
+
+| Step | Script | What it does |
+|---|---|---|
+| 1 | `deploy\install-client.ps1` | checks node/python/ssh and key auth, installs the logon supervisor, starts the bridge, verifies the relay hop |
+| 2 | `deploy\install-codex-plugin.ps1` | junctions this checkout into `%USERPROFILE%\plugins`, writes the personal marketplace, enables the plugin, retires loose skill copies |
+
+Both are idempotent and print the remaining ChatGPT-side steps.
+
 ## 1. Relay host (once)
 
 ```bash
@@ -207,6 +223,16 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster
 Hard rules to repeat in AGENTS.md: ChatGPT is read-only, Work is forbidden, never paste
 file bodies/diffs/logs into the chat, and show the outgoing prompt to the user before
 submitting unless they already said "just send it".
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| ChatGPT tool call returns `UNAVAILABLE`, or the connector shows disconnected | Client machine off, tunnel down or bridge dead. Run the relay self-check: `ssh <relay> /usr/local/bin/c2c-relay-selfcheck.sh 8081`, then `scripts/startup.ps1` on the client machine. |
+| Authorize page says **Unknown client. Please reconnect from ChatGPT.** | The bridge lost its OAuth client registrations (workspace root changed). Copy `clients` from the previous `%LOCALAPPDATA%\codex-with-chatgpt\auth\<old-id>.json` into `<new-id>.json` with `tokens` emptied, restart the bridge, then press **Reconnect** on the connector page. |
+| ChatGPT still shows the old tool list (for example `git_status` without the `repo` argument) | Tool schemas are cached per connector. Press **Reconnect** in the plugin actions menu so ChatGPT re-reads `/mcp`. |
+| Bridge not running after a reboot | `powershell -ExecutionPolicy Bypass -File scripts\startup.ps1 -WorkspacePath <root>`; log: `%LOCALAPPDATA%\codex-chatgpt-bridge\startup.log`. |
+| Want to see the data plane end to end | `node scripts/c2c-data-plane-smoke.mjs https://<relay>.<tailnet>.ts.net <pairingCode> <workspaceName>` |
 
 ## Verify
 

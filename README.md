@@ -187,7 +187,13 @@ Adapters must not expose Work. See [references/bridge-contract.md](references/br
 
 The bridge listens on loopback only. Expose it with the relay (one stable public URL, no inbound ports): [docs/deployment.md](docs/deployment.md).
 
+```powershell
+# on a machine that runs a bridge (after the relay exists)
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <workspace root>
+```
+
 - `deploy/relay-setup.sh` prepares a relay host (Tailscale Funnel).
+- `deploy/install.ps1` runs the client + Codex plugin setup in one command.
 - `deploy/install-client.ps1` prepares a machine that runs a bridge.
 - `scripts/startup.ps1` is the logon supervisor: it keeps the bridge **and** the reverse tunnel alive, so a reboot needs no manual step.
 

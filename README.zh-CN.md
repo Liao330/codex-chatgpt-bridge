@@ -187,7 +187,13 @@ Adapter 不得暴露 Work。参见 [references/bridge-contract.md](references/br
 
 bridge 只监听本机回环地址。用中继把它暴露出去（地址永久固定、本机不开任何入站端口）：[docs/deployment.md](docs/deployment.md)。
 
+```powershell
+# 在要跑 bridge 的机器上（中继就绪后）
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <工作区根目录>
+```
+
 - `deploy/relay-setup.sh`：准备中继机（Tailscale Funnel）。
+- `deploy/install.ps1`：一条命令完成客户端 + Codex 插件安装。
 - `deploy/install-client.ps1`：准备一台要跑 bridge 的机器。
 - `scripts/startup.ps1`：开机守护，同时保活 **bridge 和反向隧道**，重启后无需手动操作。
 
