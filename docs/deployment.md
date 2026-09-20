@@ -155,34 +155,58 @@ its mapping, or the bridge process died (health probe fails).
 
 ## Wire it into Codex (make it part of the normal flow)
 
-The bridge runs in the background; Codex also has to know **when** to use it. Two
-one-time steps per machine:
+The bridge runs in the background; Codex also has to know **when** to use it. One
+command installs it as a plugin, and the plugin ships the five skills:
 
-1. Install the skills into the Codex home:
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\install-codex-plugin.ps1
+```
 
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File deploy\install-codex-skills.ps1
-   ```
+What it does (every step is idempotent):
 
-   It copies `skills/*` into `%USERPROFILE%\.codex\skills` and rewrites the
-   repo-relative `.\ccw.cmd` references to this checkout, because global skills run
-   from arbitrary repositories.
+1. creates `%USERPROFILE%\plugins\codex-chatgpt-bridge` as a **directory junction** to
+   this checkout, so the marketplace serves the live git working tree (no copy drift);
+2. writes or updates the personal marketplace at
+   `%USERPROFILE%\.agents\plugins\marketplace.json`;
+3. registers `[marketplaces.personal]` and enables
+   `[plugins."codex-chatgpt-bridge@personal"]` in `%USERPROFILE%\.codex\config.toml`
+   (timestamped config backup first);
+4. retires loose copies of the five skills from `%USERPROFILE%\.codex\skills` by moving
+   them into a `skills-backup-<timestamp>` folder.
 
-2. Add a short section to `%USERPROFILE%\.codex\AGENTS.md` with the endpoint, the
-   connector name and the trigger policy. Recommended policy:
+Restart the Codex app afterwards so it rescans marketplaces. The plugin list then shows a
+single entry - **Codex ChatGPT Bridge** - carrying `chatgpt-web-orchestrator`,
+`chatgpt-pro-analysis`, `chatgpt-deep-research`, `chatgpt-result-compress` and
+`codex-chatgpt-loop`.
 
-   | Situation | Behaviour |
-   |---|---|
-   | The user asks ("review this with GPT", "deep research", "challenge this") | Use it directly |
-   | High-risk change: architecture, cross-module refactor, migration, security | Use it before implementing |
-   | A substantial feature just landed | **Offer** a review, do not auto-run |
-   | Trivial or mechanical edits, low risk, not requested | Do not use it |
+### Why five skills inside one plugin, not one merged skill
 
-   Hard rules to repeat in AGENTS.md: ChatGPT is read-only, Work is forbidden, never
-   paste file bodies/diffs/logs into the chat, and show the outgoing prompt to the
-   user before submitting unless they already said "just send it".
+Codex only loads a skill body when its description matches the task, so one merged skill
+would drag the Deep Research citation rules into every code review and blur the triggers.
+The plugin is the single entry point and the single on/off switch; the skills stay precise
+triggers. See the table below for the policy that decides when they fire.
 
-Without step 2 the skills exist but nothing invokes them: the loop stays manual.
+### Updating the plugin after editing this repo
+
+The junction means source edits are visible immediately. If Codex caches the plugin,
+bump the manifest cachebuster and reinstall from the same marketplace:
+
+```bash
+python3 ~/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py <plugin-path>
+```
+
+## Trigger policy (also written into %USERPROFILE%\.codex\AGENTS.md)
+
+| Situation | Behaviour |
+|---|---|
+| The user asks ("review this with GPT", "deep research", "challenge this") | Use it directly |
+| High-risk change: architecture, cross-module refactor, migration, security | Use it before implementing |
+| A substantial feature just landed | **Offer** a review, do not auto-run |
+| Trivial or mechanical edits, low risk, not requested | Do not use it |
+
+Hard rules to repeat in AGENTS.md: ChatGPT is read-only, Work is forbidden, never paste
+file bodies/diffs/logs into the chat, and show the outgoing prompt to the user before
+submitting unless they already said "just send it".
 
 ## Verify
 
