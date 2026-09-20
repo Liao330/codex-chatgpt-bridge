@@ -7,6 +7,16 @@
   reverse tunnel at logon, so a reboot needs no manual step (verified by killing both
   and letting the supervisor restore them).
 
+- Add `deploy/install.ps1`: one command that runs the client installer and the Codex
+  plugin installer, then prints the remaining ChatGPT-side steps. `docs/deployment.md`
+  gained a One command section and a Troubleshooting table.
+- Remove the retired `agent-browser` fallback (`adapters/agent-browser.example.json`
+  and its rule); every ChatGPT page goes through the Codex In-app Browser.
+- Cleanup pass so the checkout matches the deployed reality: dropped the stale e2e test
+  workspace and its bridge state, the superseded config backups and the loose-skill
+  backup, and retired the failed relay-less path (nginx + IP certificate + acme cron +
+  cloudflared binary), leaving only the Tailscale Funnel relay.
+
 ## Unreleased
 
 - Fix `c2c start --tunnel` failing with `Tunnel start timed out` on networks where the
