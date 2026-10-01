@@ -67,15 +67,57 @@ steps. It is idempotent.
 
 ## 3. Auto-start
 
-`scripts/startup.ps1` is the single supervisor: it keeps **both** the bridge and the
-SSH tunnel alive and restarts them after a reboot or crash. It is launched at logon by
-a `.vbs` in the Startup folder (`deploy/install-client.ps1` writes it) and logs to
-`%LOCALAPPDATA%\codex-chatgpt-bridge\startup.log`.
+`scripts/startup.ps1` checks the bridge and SSH tunnel independently every five seconds.
+A living SSH tunnel does not hide a stopped bridge. Three consecutive bridge failures
+are required before recovery; repeated recovery attempts back off from 10 seconds to
+five minutes. Successful probes must remain stable for a minute before resetting that
+backoff. CLI probes time out after 10 seconds and HTTP probes after two seconds.
+
+Use one canonical workspace, one explicit state directory, and one local port:
 
 ```powershell
-# run it by hand if you ever want to restart everything
-powershell -ExecutionPolicy Bypass -File scripts\startup.ps1 -WorkspacePath <path>
+powershell -NoProfile -ExecutionPolicy Bypass -File deploy\install-client.ps1 `
+  -WorkspacePath E:\github_code `
+  -StateDirectory "$env:LOCALAPPDATA\codex-with-chatgpt" `
+  -SshTarget c2c-relay -RemotePort 8081 -LocalPort 48765
 ```
+
+The installer writes these exact options into a hidden logon launcher and only reuses
+an exactly matching supervisor invocation. It does not stop old or uncertain processes;
+retire a legacy supervisor only after verifying its full command and creation time.
+The supervisor holds a machine-wide lock keyed by the real workspace path and local
+port, independently of the state directory, so a second logon or a different state
+option cannot create a second supervisor for the same bridge.
+
+State-directory environment is passed only to bridge/CLI child processes. For manual
+CLI commands, set `C2C_STATE_DIR` to the same directory in that CLI session. Keep its
+`auth`, `runtime`, and session files; do not change workspace roots or migrate OAuth
+registrations automatically. Existing authorization is preserved through restart.
+
+A bridge is adopted only when `/health`, authenticated CLI `status`, runtime state,
+actual listening PID, exact repo CLI `serve --workspace` command, and process creation
+time agree. Recovery may stop only a process whose identity this supervisor previously
+proved. Foreign listeners, mismatched ports, malformed runtime, changed PID identity,
+or uncertain listener queries fail closed. Inspect the phase log and resolve ownership
+manually; reconnecting ChatGPT cannot repair an incorrect local state directory.
+
+Before a controlled restart, authorization and runtime are copied to a current-user-only
+ACL directory under `StateDirectory\supervisor-backups`. A failed backup leaves the
+bridge intact. New children are explicitly started with `serve --port`; if the bridge
+falls back to a random port during a startup race, only that freshly created child is
+stopped after its PID, command, and creation time are rechecked. The SSH process runs
+hidden and reconnects independently with bounded backoff.
+
+Logs contain phase names, not CLI output, authorization, or credentials, at
+`%LOCALAPPDATA%\codex-chatgpt-bridge\startup-<workspace-port-key>.log`.
+Typical phases are `healthy`, `stopped`, `recovery-started`, `untrusted-state`,
+`port-mismatch`, and `recovery-refused`. Shutdown leaves a healthy bridge running.
+
+Optional startup controls: `-PollSeconds 5`, `-FailureThreshold 3`,
+`-CliTimeoutSeconds 10`. Health recovery cannot keep a powered-off computer online or
+prevent authorization revocation. OAuth lifetimes are unchanged: access tokens last
+one hour and refresh tokens have a rolling 30-day expiry. Thirty days without a
+successful refresh can still require reauthorization.
 
 ## 4. ChatGPT side (once per workspace)
 
@@ -131,21 +173,21 @@ stay isolated.
 
 ### If the connector says "Unknown client"
 
-ChatGPT caches one OAuth client registration per connector, and the bridge keeps those
-registrations per workspace under
-`%LOCALAPPDATA%\codex-with-chatgpt\auth\<workspaceId>.json`. After the workspace root
-changes, the new store is empty and the authorize page answers *"Unknown client. Please
-reconnect from ChatGPT."* Copy the client registrations over (tokens are workspace-bound
-and can be dropped):
+The message means the running bridge does not recognize the `client_id` sent by
+ChatGPT. Possible causes include missing registration, a changed workspace, a different
+state directory, or a stale process using another state. It does not by itself prove
+that a token expired.
 
-```powershell
-# copy "clients" from the old store, keep "tokens" empty
-# <old-id> -> <new-id> from: ccw.cmd c2c exec -- status -w <workspace> --json
-```
+Check the fixed workspace and state directory first, then inspect the supervisor phase
+log and authenticated CLI status. A healthy HTTP endpoint alone does not prove that the
+CLI and bridge share administrator state. Preserve and securely back up authorization
+before any controlled recovery. Do not copy client registrations or clear tokens as an
+automatic repair. If registration truly was lost, restore the correct state backup or
+recreate the ChatGPT connection so it registers again.
 
-Then restart the bridge (so the store is re-read) and press **Reconnect** on the
-connector page. The tool list is refreshed at the same time, which is required after
-upgrading the bridge (for example when the git tools gained the `repo` argument).
+The 2026-10-02 incident and its evidence limits are recorded in
+[incident-history.md](incident-history.md), with structured statistics in
+[incidents.json](incidents.json).
 
 ## Relay self-check
 
@@ -229,9 +271,9 @@ submitting unless they already said "just send it".
 | Symptom | Cause / fix |
 |---|---|
 | ChatGPT tool call returns `UNAVAILABLE`, or the connector shows disconnected | Client machine off, tunnel down or bridge dead. Run the relay self-check: `ssh <relay> /usr/local/bin/c2c-relay-selfcheck.sh 8081`, then `scripts/startup.ps1` on the client machine. |
-| Authorize page says **Unknown client. Please reconnect from ChatGPT.** | The bridge lost its OAuth client registrations (workspace root changed). Copy `clients` from the previous `%LOCALAPPDATA%\codex-with-chatgpt\auth\<old-id>.json` into `<new-id>.json` with `tokens` emptied, restart the bridge, then press **Reconnect** on the connector page. |
+| Authorize page says **Unknown client. Please reconnect from ChatGPT.** | The running process does not recognize the cached client. Verify workspace, explicit state directory, runtime/listener identity and authenticated CLI status; preserve state and resolve uncertain ownership before reconnecting. See the incident record and Unknown client section above. |
 | ChatGPT still shows the old tool list (for example `git_status` without the `repo` argument) | Tool schemas are cached per connector. Press **Reconnect** in the plugin actions menu so ChatGPT re-reads `/mcp`. |
-| Bridge not running after a reboot | `powershell -ExecutionPolicy Bypass -File scripts\startup.ps1 -WorkspacePath <root>`; log: `%LOCALAPPDATA%\codex-chatgpt-bridge\startup.log`. |
+| Bridge not running after a reboot | `powershell -ExecutionPolicy Bypass -File scripts\startup.ps1 -WorkspacePath <root>`; log: `%LOCALAPPDATA%\codex-chatgpt-bridge\startup-<workspace-port-key>.log`. |
 | Want to see the data plane end to end | `node scripts/c2c-data-plane-smoke.mjs https://<relay>.<tailnet>.ts.net <pairingCode> <workspaceName>` |
 
 ## Verify

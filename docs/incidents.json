@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "scope": "Only incidents recorded in this file; not a complete historical incident count.",
+  "summary": {
+    "recorded": 1,
+    "resolved": 1,
+    "authorization_data_loss": 0,
+    "manual_reauthorization": 1,
+    "event_types": {
+      "oauth_state_mismatch": 1
+    },
+    "mttr_minutes": null,
+    "mttr_note": "Incident start time was not recorded; MTTR cannot be calculated."
+  },
+  "incidents": [
+    {
+      "id": "2026-10-02-oauth-state-mismatch",
+      "date": "2026-10-02",
+      "timezone": "Asia/Shanghai",
+      "event_type": "oauth_state_mismatch",
+      "status": "resolved",
+      "symptom": "Unknown client. Please reconnect from ChatGPT.",
+      "root_cause": {
+        "confirmed": "State/instance mismatch between the running bridge and default persisted state.",
+        "unresolved": "The previous process's actual state directory was not established; directory drift is not a confirmed cause."
+      },
+      "evidence": {
+        "runtime_pid_differed_from_listener_pid": true,
+        "admin_status_http_status_before": 404,
+        "persisted_clients_before": 9,
+        "unrecognized_persisted_clients_before": 9,
+        "recognized_chatgpt_clients_after_restart": 4,
+        "authorization_records_and_token_file_unchanged_by_recovery": true,
+        "user_web_pairing_succeeded": true,
+        "new_token_persistence_verified_after_pairing": true
+      },
+      "recovery": "Protected state backup, targeted bridge restart with explicit default C2C_STATE_DIR, health/admin/client-recognition verification, then user pairing in ChatGPT Web.",
+      "authorization_data_loss": false,
+      "manual_reauthorization": true,
+      "started_at": null,
+      "mttr_minutes": null,
+      "long_term_stability": {
+        "status": "deployed_immediate_validation_passed",
+        "deployed_at_approx": "2026-10-02T01:41:00+08:00",
+        "implementation": [
+          "Explicit state directory in login startup entry",
+          "Single-instance mutex",
+          "Independent bridge and SSH checks",
+          "Process identity and creation-time verification",
+          "ACL-protected backups",
+          "Recovery restricted to confirmed identities",
+          "Failure thresholds, bounded CLI calls and backoff"
+        ],
+        "controlled_cutover": {
+          "existing_bridge_retained": true,
+          "auth_file_sha256_unchanged": true,
+          "previous_supervisor_and_owned_tunnel_stopped": true,
+          "ssh_with_unknown_ownership_retained": true
+        },
+        "immediate_validation": {
+          "cli_admin_ok": true,
+          "cli_running": true,
+          "workspace_and_port_consistent": true,
+          "token_count": 4,
+          "public_health_correct_workspace": true,
+          "relay_selfcheck": "all PASS",
+          "anonymous_mcp_http_status": 401,
+          "reviewer_blockers": 0
+        },
+        "test_evidence": {
+          "python_groups_passed": [
+            22,
+            39
+          ],
+          "supervisor_tests_passed": 28,
+          "windows_bash_demo_skipped": 1,
+          "skip_basis": "Existing platform condition",
+          "c2c_pre_change_baseline_passed": 186,
+          "c2c_post_change_186_retested": false
+        },
+        "authorization_policy": "1-hour access tokens and 30-day sliding refresh tokens retained; no perpetual authorization guarantee.",
+        "outstanding_validation": [
+          "Long-duration stability requires observation during normal operation",
+          "Actual ChatGPT tool invocation not yet verified"
+        ]
+      }
+    }
+  ]
+}
