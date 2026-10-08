@@ -56,6 +56,7 @@ import {
 } from "../session/state.js";
 import { appendExecutionRecord } from "../execution/records.js";
 import { saveExecutionOutput } from "../execution/output.js";
+import { ToolMetrics } from "../mcp/tool-metrics.js";
 
 const program = new Command();
 
@@ -64,6 +65,27 @@ const say = (msg: string): void => {
 };
 const check = (msg: string): void => say(`✓ ${msg}`);
 const cross = (msg: string): void => say(`✗ ${msg}`);
+
+program.command("metrics")
+  .description("Report retained local MCP tool call metrics")
+  .option("--from <utc>", "inclusive UTC ISO timestamp")
+  .option("--to <utc>", "exclusive UTC ISO timestamp")
+  .option("--json", "machine-readable output", false)
+  .action((opts: { from?: string; to?: string; json: boolean }) => {
+    try {
+      const report = new ToolMetrics().report(opts.from, opts.to);
+      if (!report.available) throw new Error("Metrics storage is unavailable; report may be incomplete");
+      if (opts.json) { say(JSON.stringify(report)); return; }
+      say(`UTC window: ${report.window.from} <= timestamp < ${report.window.to}`);
+      say(`Retained data: ${report.coverage.firstRetained ?? "empty"} to ${report.coverage.lastRetained ?? "empty"}; 30 days / 30 MiB maximum`);
+      say(report.coverage.denominator);
+      say(`Ignored corrupt/partial records: ${report.coverage.ignoredRecords}; coverage may have gaps`);
+      say("tool\tcount\tsuccess\terror\tcancelled\tsuccess rate\tavg ms\tP50 ms\tP95 ms");
+      for (const [tool, row] of [["overall", report.overall], ...Object.entries(report.perTool)] as const) {
+        say(`${tool}\t${row.count}\t${row.success}\t${row.error}\t${row.cancelled}\t${row.successRate === null ? "n/a" : (row.successRate * 100).toFixed(1) + "%"}\t${row.averageMs ?? "n/a"}\t${row.p50Ms ?? "n/a"}\t${row.p95Ms ?? "n/a"}`);
+      }
+    } catch (error) { handleCliError(error, opts.json); }
+  });
 
 function resolveWorkspace(option?: string): string {
   return path.resolve(option ?? process.cwd());
