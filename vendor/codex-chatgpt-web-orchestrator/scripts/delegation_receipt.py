@@ -132,6 +132,8 @@ def validate_public_receipt(receipt: dict[str, Any]) -> list[str]:
         issues.append("adapter-compatibility-overclaim")
     if adapter.get("family") not in {"native-control-style", "oracle-style"}:
         issues.append("unsupported-adapter-family")
+    if adapter.get("kind") not in {"browser-thread-bridge", "saved-browser-session", "web-http"}:
+        issues.append("unsupported-adapter-kind")
 
     binding = receipt.get("private_binding", {})
     if binding.get("private_sidecar_present") is not True:
@@ -166,6 +168,14 @@ def validate_public_receipt(receipt: dict[str, Any]) -> list[str]:
         issues.append("missing-mode-model-evidence")
     if route.get("model_verified") is not True:
         issues.append("missing-mode-model-evidence")
+    if adapter.get("kind") == "web-http":
+        if (route.get("surface") != "chat" or route.get("mode") != "chat-pro"
+                or route.get("evidence_source") != "http-server"
+                or route.get("server_provenance") != "conversation_mapping_metadata"
+                or route.get("mcp_verified") is not True):
+            issues.append("missing-http-server-evidence")
+        if authorization.get("destination_class") != "chatgpt-web-http":
+            issues.append("http-destination-mismatch")
 
     outcome = receipt.get("outcome", {})
     status = outcome.get("status")

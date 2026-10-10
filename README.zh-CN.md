@@ -212,3 +212,7 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <工�
 ## Upstream
 
 参见 [UPSTREAM.md](UPSTREAM.md) 和 [THIRD_PARTY.md](THIRD_PARTY.md)。
+
+## 独立 HTTP 文本审查（显式启用）
+
+新增 web-http 执行器与本机 DPAPI 凭证入口，命令和真实验收步骤见 [HTTP 文本审查](docs/http-text-review.md)。不引用其他项目代码、环境或凭证。当前默认未切换；真实目标模型、只读 MCP 和断线恢复全部通过后才切换并移除浏览器执行指引。

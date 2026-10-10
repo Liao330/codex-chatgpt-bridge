@@ -1,0 +1,6 @@
+{
+  "identity": "independent-web-http",
+  "family": "native-control-style",
+  "kind": "web-http",
+  "capabilities": ["send", "observe", "capture", "stable_identity", "chat_pro"]
+}

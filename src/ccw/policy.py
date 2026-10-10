@@ -47,8 +47,10 @@ def validate_adapter_manifest(manifest: Mapping[str, object], *, mode: str) -> l
         issues.append(f"missing-capability:{item}")
     if manifest.get("family") not in {"native-control-style", "oracle-style"}:
         issues.append("invalid-adapter-family")
-    if manifest.get("kind") not in {"browser-thread-bridge", "saved-browser-session"}:
+    if manifest.get("kind") not in {"browser-thread-bridge", "saved-browser-session", "web-http"}:
         issues.append("invalid-adapter-kind")
+    if manifest.get("kind") == "web-http" and mode != "chat-pro":
+        issues.append("http-mode-unsupported")
     return sorted(set(issues))
 
 

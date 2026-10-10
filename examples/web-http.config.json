@@ -1,0 +1,8 @@
+{
+  "model": "REPLACE_WITH_VERIFIED_PRO_MODEL_SLUG",
+  "account_hash": "REPLACE_WITH_PROBE_ACCOUNT_HASH",
+  "expected_connector": "REPLACE_WITH_SERVER_CONNECTOR_ID",
+  "expected_tool": "REPLACE_WITH_SERVER_READ_ONLY_TOOL_NAME",
+  "timeout_seconds": 120,
+  "max_response_bytes": 8388608
+}

@@ -20,7 +20,7 @@
         "scope_sha256": {"$ref": "#/$defs/sha256"},
         "prompt_sha256": {"$ref": "#/$defs/sha256"},
         "exact_prompt_approved": {"const": true},
-        "destination_class": {"enum": ["visible-chatgpt-web", "user-operated-manual"]},
+        "destination_class": {"enum": ["visible-chatgpt-web", "user-operated-manual", "chatgpt-web-http"]},
         "authorized_at": {"type": "string", "format": "date-time"}
       }
     },
@@ -38,7 +38,7 @@
       "required": ["family", "kind", "runtime_claim", "capabilities"],
       "properties": {
         "family": {"enum": ["native-control-style", "oracle-style"]},
-        "kind": {"enum": ["browser-thread-bridge", "saved-browser-session"]},
+        "kind": {"enum": ["browser-thread-bridge", "saved-browser-session", "web-http"]},
         "runtime_claim": {"const": "style-mapping-only"},
         "capabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["send", "observe", "capture", "stable_identity", "chat_pro", "deep_research", "work"]}}
       }
@@ -72,8 +72,10 @@
         "model_label": {"type": "string", "minLength": 1},
         "mode_verified": {"type": "boolean"},
         "model_verified": {"type": "boolean"},
-        "evidence_source": {"enum": ["visible-control", "adapter-report-with-postcondition", "user-operated-evidence"]},
-        "observed_at": {"type": "string", "format": "date-time"}
+        "evidence_source": {"enum": ["visible-control", "adapter-report-with-postcondition", "user-operated-evidence", "http-server"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "mcp_verified": {"type": "boolean"},
+        "server_provenance": {"enum": ["conversation_mapping_metadata", "unverified"]}
       }
     },
     "outcome": {

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from functools import wraps
 from pathlib import Path
 from typing import Any
 import json
@@ -38,6 +39,29 @@ def _event(state: dict[str, Any], kind: str, **fields: Any) -> None:
 
 
 def save_run(state: dict[str, Any]) -> None:
+    existing_path = _state_path(state["run_id"])
+    existing = read_json(existing_path) if existing_path.exists() else None
+    if state["adapter"]["kind"] == "web-http" or (existing and existing["adapter"]["kind"] == "web-http"):
+        from .http_runtime import process_lock
+        with process_lock("run:" + state["run_id"]):
+            path = _state_path(state["run_id"])
+            if path.exists():
+                previous = read_json(path)
+                for field in ("adapter", "prompt", "workspace", "mode"):
+                    if state[field] != previous[field]:
+                        raise StateError("HTTP run identity is immutable")
+                if state.get("http_revision", 0) != previous.get("http_revision", 0):
+                    raise StateError("stale HTTP run update rejected")
+                if state["submission"]["count"] < previous["submission"]["count"]:
+                    raise StateError("HTTP submission count cannot decrease")
+                if previous["submission"]["count"] and state["submission"]["state"] == "not-sent":
+                    raise StateError("HTTP submission cannot return to not-sent")
+            if state["submission"]["count"] not in (0, 1):
+                raise StateError("HTTP submission count must remain at most one")
+            state["http_revision"] = state.get("http_revision", 0) + 1
+            state["updated_at"] = utc_now()
+            write_json(path, state)
+        return
     state["updated_at"] = utc_now()
     write_json(_state_path(state["run_id"]), state)
 
@@ -47,6 +71,48 @@ def load_run(run_id: str) -> dict[str, Any]:
     if not path.exists():
         raise StateError(f"run not found: {run_id}")
     return read_json(path)
+
+
+def http_mutation_guard(function):
+    """Serialize every HTTP read/modify/write operation with the executor."""
+    @wraps(function)
+    def guarded(run_id, *args, **kwargs):
+        if load_run(run_id)["adapter"]["kind"] != "web-http":
+            return function(run_id, *args, **kwargs)
+        from .http_runtime import process_lock
+        with process_lock("run:" + run_id):
+            return function(run_id, *args, **kwargs)
+    return guarded
+
+
+def invalidate_http_derivatives(state):
+    state["compression"] = {"status": "pending", "path": None, "schema_version": "1.0.0"}
+    state["verification"] = {"status": "pending", "path": None}
+    state["finalized"] = False
+    state["acceptance"] = {"verdict": "hold", "criteria": [], "evaluated_at": None}
+    for name in ("receipt.public.json", "receipt.private.json"):
+        (run_dir(state["run_id"]) / name).unlink(missing_ok=True)
+
+
+def http_output_binding(state, *, compressed=False):
+    directory = run_dir(state["run_id"])
+    raw_path = state["outcome"].get("raw_path")
+    if not raw_path or sha256_file(directory / raw_path) != state["outcome"].get("raw_sha256"):
+        raise StateError("HTTP raw output integrity mismatch")
+    result = {"raw_sha256": state["outcome"]["raw_sha256"],
+              "terminal_identity_sha256": state["outcome"].get("terminal_identity_sha256")}
+    if compressed:
+        if state["compression"].get("status") != "complete" or not state["compression"].get("path"):
+            raise StateError("HTTP compressed output is not current")
+        path = directory / state["compression"]["path"]
+        value = read_json(path)
+        digest = sha256_file(path)
+        if (value.get("raw_sha256") != result["raw_sha256"]
+                or state["compression"].get("sha256") != digest
+                or state["compression"].get("terminal_identity_sha256") != result["terminal_identity_sha256"]):
+            raise StateError("HTTP compressed output binding mismatch")
+        result["compressed_sha256"] = digest
+    return result
 
 
 def create_run(
@@ -153,6 +219,8 @@ def create_run(
         "last_recovery": None,
         "events": [],
     }
+    if adapter["kind"] == "web-http":
+        state["route_evidence"]["evidence_source"] = "http-server"
     _event(state, "created", mode=normalized_mode, task_kind=task_kind)
     write_json(_private_path(run_id), {
         "schema_version": "1.0.0",
@@ -166,8 +234,13 @@ def create_run(
     return state
 
 
+@http_mutation_guard
 def authorize_run(run_id: str) -> dict[str, Any]:
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http" and (
+            state["submission"]["count"] or state["submission"]["state"] != "not-sent"
+            or "http_intent" in read_json(_private_path(run_id))):
+        raise StateError("HTTP submission already attempted; authorization cannot reset it")
     if state["mode"] == "work":
         raise WorkForbiddenError("ChatGPT Work is permanently disabled")
     state["authorization"]["exact_prompt_approved"] = True
@@ -178,10 +251,13 @@ def authorize_run(run_id: str) -> dict[str, Any]:
     return state
 
 
+@http_mutation_guard
 def record_preflight(run_id: str, observation: dict[str, Any]) -> dict[str, Any]:
     from .policy import preflight_from_dict
 
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP runs require HTTP preflight")
     action = preflight_from_dict(observation)
     ready = action in {"ready_to_fill_prompt", "ready_to_submit_once"}
     if ready:
@@ -203,8 +279,11 @@ def record_preflight(run_id: str, observation: dict[str, Any]) -> dict[str, Any]
     return state
 
 
+@http_mutation_guard
 def begin_submit(run_id: str) -> dict[str, Any]:
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP runs require execute-http")
     if state["status"] != "prepared":
         raise StateError(f"cannot submit from status {state['status']}")
     if state["submission"]["count"] != 0 or state["submission"]["state"] != "not-sent":
@@ -216,8 +295,11 @@ def begin_submit(run_id: str) -> dict[str, Any]:
     return state
 
 
+@http_mutation_guard
 def confirm_submit(run_id: str, *, acknowledged: bool, conversation_identity: str | None = None) -> dict[str, Any]:
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP submission is recorded by execute-http")
     if state["status"] != "committing":
         raise StateError(f"cannot confirm submit from status {state['status']}")
     if state["submission"]["count"] != 0:
@@ -237,10 +319,13 @@ def confirm_submit(run_id: str, *, acknowledged: bool, conversation_identity: st
     return state
 
 
+@http_mutation_guard
 def record_observation(run_id: str, observation: dict[str, Any]) -> dict[str, Any]:
     from .policy import classify_completion
 
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP runs require server observation")
     normalized = {
         "active_generation": None,
         "terminal_signal": False,
@@ -267,8 +352,11 @@ def record_observation(run_id: str, observation: dict[str, Any]) -> dict[str, An
     return state
 
 
+@http_mutation_guard
 def capture_raw(run_id: str, raw_text: str, *, terminal_signal: bool) -> dict[str, Any]:
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP output must come from the HTTP executor")
     if state["submission"]["count"] != 1:
         raise StateError("raw capture requires one confirmed submission")
     directory = ensure_run_dir(run_id)
@@ -291,10 +379,13 @@ def capture_raw(run_id: str, raw_text: str, *, terminal_signal: bool) -> dict[st
     return state
 
 
+@http_mutation_guard
 def record_recovery(run_id: str, value: dict[str, Any]) -> dict[str, Any]:
     from .policy import recovery_decision
 
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http":
+        raise StateError("HTTP recovery requires recover-http")
     action = recovery_decision(value)
     state["last_recovery"] = {"input": value, "action": action, "resubmit": False, "at": utc_now()}
     if action == "mark_partial_no_resend":
@@ -308,9 +399,19 @@ def record_recovery(run_id: str, value: dict[str, Any]) -> dict[str, Any]:
     return state
 
 
+@http_mutation_guard
 def set_compression(run_id: str, value: dict[str, Any], path: Path) -> dict[str, Any]:
     state = load_run(run_id)
+    binding = None
+    if state["adapter"]["kind"] == "web-http":
+        binding = http_output_binding(state)
+        if (path.resolve().parent != run_dir(run_id).resolve() or read_json(path) != value
+                or value.get("raw_sha256") != binding["raw_sha256"]):
+            raise StateError("stale HTTP compression rejected")
+        invalidate_http_derivatives(state)
     state["compression"] = {"status": "complete", "path": path.name, "schema_version": "1.0.0"}
+    if binding:
+        state["compression"].update(binding, sha256=sha256_file(path))
     if value.get("citations"):
         state["outcome"]["citations"] = value["citations"]
     _event(state, "compressed", path=path.name)
@@ -318,17 +419,32 @@ def set_compression(run_id: str, value: dict[str, Any], path: Path) -> dict[str,
     return state
 
 
+@http_mutation_guard
 def set_verification(run_id: str, value: dict[str, Any], path: Path) -> dict[str, Any]:
     state = load_run(run_id)
+    binding = None
+    if state["adapter"]["kind"] == "web-http":
+        binding = http_output_binding(state, compressed=True)
+        if (path.resolve().parent != run_dir(run_id).resolve() or read_json(path) != value
+                or any(value.get(key) != expected for key, expected in binding.items())):
+            raise StateError("stale HTTP verification rejected")
     status = "passed" if value.get("passed") else "needs-review"
     state["verification"] = {"status": status, "path": path.name}
+    if binding:
+        state["verification"].update(binding, sha256=sha256_file(path))
+        state["finalized"] = False
+        for name in ("receipt.public.json", "receipt.private.json"):
+            (run_dir(run_id) / name).unlink(missing_ok=True)
     _event(state, "verified", status=status)
     save_run(state)
     return state
 
 
+@http_mutation_guard
 def finalize_run(run_id: str) -> dict[str, Any]:
     state = load_run(run_id)
+    if state["adapter"]["kind"] == "web-http" and not state.get("http_evidence", {}).get("review_complete"):
+        raise StateError("HTTP finalization requires model and MCP server evidence")
     if state["status"] != "complete":
         raise StateError("only complete runs can be finalized")
     if not state["outcome"].get("raw_path"):
@@ -337,6 +453,14 @@ def finalize_run(run_id: str) -> dict[str, Any]:
         raise StateError("compressed output must exist before finalization")
     if state["verification"]["status"] not in {"passed", "needs-review"}:
         raise StateError("verification must be recorded before finalization")
+    if state["adapter"]["kind"] == "web-http":
+        binding = http_output_binding(state, compressed=True)
+        path = run_dir(run_id) / state["verification"]["path"]
+        checked = read_json(path)
+        if (sha256_file(path) != state["verification"].get("sha256")
+                or any(checked.get(key) != expected or state["verification"].get(key) != expected
+                       for key, expected in binding.items())):
+            raise StateError("HTTP verification output binding mismatch")
 
     receipt_mod = upstream_receipt()
     private = read_json(_private_path(run_id))
@@ -408,6 +532,8 @@ def finalize_run(run_id: str) -> dict[str, Any]:
             "canonical_sha256": "0" * 64,
         },
     }
+    if adapter["kind"] == "web-http":
+        receipt["authorization"] = {**state["authorization"], "destination_class": "chatgpt-web-http"}
     # The adapter capability surface in the receipt never advertises Work.
     receipt["adapter"]["capabilities"] = [
         item for item in receipt["adapter"]["capabilities"] if item != "work"

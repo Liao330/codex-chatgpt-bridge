@@ -17,3 +17,5 @@ private.json
 vendor/bin/
 
 vendor/*.tar.gz
+
+.venv-http/

@@ -7,7 +7,7 @@ import re
 
 from .errors import StateError, ValidationError
 from .fingerprint import sha256_text
-from .state import load_run, save_run
+from .state import load_run, save_run, http_mutation_guard
 from .storage import append_event, atomic_write_text, ensure_run_dir, utc_now, write_json
 
 
@@ -48,6 +48,7 @@ def _protocol(state: dict[str, Any]) -> dict[str, Any]:
     return state.setdefault("protocol", {"state": None, "iteration": 0, "task_id": None, "checkpoint": None, "updated_at": None})
 
 
+@http_mutation_guard
 def set_protocol_state(
     run_id: str,
     *,
@@ -109,6 +110,7 @@ def _safe_relative_files(files: list[str]) -> list[str]:
     return safe
 
 
+@http_mutation_guard
 def record_execution(
     run_id: str,
     *,
@@ -156,6 +158,7 @@ def record_execution(
     return record
 
 
+@http_mutation_guard
 def record_handoff(run_id: str, brief: str) -> dict[str, Any]:
     brief, _ = sanitize_output(brief.strip())
     if not brief:

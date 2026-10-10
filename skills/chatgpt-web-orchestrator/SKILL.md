@@ -7,6 +7,23 @@ description: Orchestrate a read-only ChatGPT Web Pro or Deep Research run for Co
 
 Use Codex as the management hub. ChatGPT Web is an external, read-only reviewer or researcher.
 
+## Explicit HTTP text review
+
+When the user explicitly requests `web-http`, use this repository's independent
+HTTP executor and credential store. Do not use browser controls or import another
+project's provider. HTTP supports text `chat-pro` only. Follow
+`docs/http-text-review.md`: initialize with `adapters/web-http.example.json`,
+authorize the exact bounded prompt, then use `run preflight-http` and
+`run execute-http` with private configuration. Observe or resume with
+`run recover-http`; never submit twice or change transport after an uncertain send.
+ChatGPT must read workspace evidence through the existing read-only MCP.
+Missing credentials, unverified target models, unknown tool metadata and
+unsupported project/context parameters stop or hold the run explicitly.
+Keep the general default unchanged until real model, MCP and interruption-recovery
+acceptance succeeds. Offline tests do not establish those capabilities.
+
+The visible-browser workflow below applies to browser runs.
+
 ## Hard policy
 
 - Never select, prepare, emulate, or fall back to ChatGPT Work.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import wraps
 import json
 from pathlib import Path
 import sys
@@ -36,6 +37,14 @@ from .state import (
 )
 from .storage import read_json, run_dir, write_json
 from .verifier import verify_compressed
+
+
+def _http_artifact_guard(function):
+    @wraps(function)
+    def guarded(args):
+        from .state import http_mutation_guard
+        return http_mutation_guard(lambda run_id: function(args))(args.run_id)
+    return guarded
 
 
 def _read_json(path: str) -> Any:
@@ -182,8 +191,12 @@ def command_run_recover(args: argparse.Namespace) -> int:
     return 0
 
 
+@_http_artifact_guard
 def command_run_compress(args: argparse.Namespace) -> int:
     state = load_run(args.run_id)
+    if state["adapter"]["kind"] == "web-http":
+        from .state import http_output_binding
+        http_output_binding(state)
     raw_path = run_dir(args.run_id) / state["outcome"]["raw_path"]
     response = compress_response(raw_path.read_text(encoding="utf-8"), mode=state["mode"], raw_path=raw_path)
     issues = validate_compressed(response)
@@ -196,6 +209,7 @@ def command_run_compress(args: argparse.Namespace) -> int:
     return 0
 
 
+@_http_artifact_guard
 def command_run_verify(args: argparse.Namespace) -> int:
     state = load_run(args.run_id)
     compressed_path = run_dir(args.run_id) / state["compression"]["path"]
@@ -205,6 +219,9 @@ def command_run_verify(args: argparse.Namespace) -> int:
         workspace=state["workspace"],
         raw_sha256=state["outcome"].get("raw_sha256"),
     )
+    if state["adapter"]["kind"] == "web-http":
+        from .state import http_output_binding
+        result.update(http_output_binding(state, compressed=True))
     output_path = run_dir(args.run_id) / "verification.json"
     write_json(output_path, result)
     set_verification(args.run_id, result, output_path)
@@ -240,6 +257,29 @@ def command_run_status(args: argparse.Namespace) -> int:
         }
     )
     return 0
+
+
+def command_run_http(args: argparse.Namespace) -> int:
+    from .http_runtime import load_config, preflight_http, execute_http, recover_http
+    operation = {"preflight-http": preflight_http, "execute-http": execute_http,
+                 "recover-http": recover_http}[args.command]
+    result = operation(args.run_id, load_config(args.config))
+    _print(result)
+    return 0 if result["status"] in {"prepared", "complete"} else 4
+
+
+def command_http_credentials(args: argparse.Namespace) -> int:
+    from .credentials import configure_credentials
+    result = configure_credentials(args.path)
+    _print({"configured": True})
+    return 0
+
+
+def command_http_probe(args: argparse.Namespace) -> int:
+    from .http_runtime import load_config, probe_http
+    result = probe_http(load_config(args.config, for_probe=True))
+    _print(result)
+    return 0 if result["state"] == "ready" else 4
 
 
 def command_c2c_detect(args: argparse.Namespace) -> int:
@@ -319,6 +359,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="group", required=True)
 
+    http = sub.add_parser("http", help="independent HTTP credentials and capability probe")
+    http_sub = http.add_subparsers(dest="command", required=True)
+    credentials = http_sub.add_parser("credentials-set")
+    credentials.add_argument("--path")
+    credentials.set_defaults(func=command_http_credentials)
+    probe = http_sub.add_parser("probe")
+    probe.add_argument("--config", required=True)
+    probe.set_defaults(func=command_http_probe)
+
     route = sub.add_parser("route", help="route planning and policy")
     route_sub = route.add_subparsers(dest="command", required=True)
     route_plan = route_sub.add_parser("plan", help="plan a route without sending")
@@ -356,6 +405,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_init.add_argument("--prompt-text")
     run_init.add_argument("--allowed-path", action="append", default=[])
     run_init.set_defaults(func=command_run_init)
+
+    for name in ("preflight-http", "execute-http", "recover-http"):
+        command = run_sub.add_parser(name)
+        command.add_argument("run_id")
+        command.add_argument("--config", required=True)
+        command.set_defaults(func=command_run_http)
 
     for name, handler in (
         ("authorize", command_run_authorize),

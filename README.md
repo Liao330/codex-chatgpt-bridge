@@ -212,3 +212,7 @@ Runtime state is stored in `CCW_HOME`, default `~/.ccw/runs/<run_id>`. `private.
 ## Upstream
 
 See [UPSTREAM.md](UPSTREAM.md) and [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## Independent HTTP text review (opt-in)
+
+See [HTTP text review](docs/http-text-review.md) for independent credential setup, commands and live acceptance. No other project's provider, environment or credentials are referenced. Browser defaults remain until real model, read-only MCP and interruption-recovery acceptance succeeds.

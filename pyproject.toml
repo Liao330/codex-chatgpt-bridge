@@ -12,6 +12,9 @@ license = { text = "MIT" }
 authors = [{ name = "Local developer" }]
 dependencies = []
 
+[project.optional-dependencies]
+http = ["curl_cffi>=0.13,<0.17"]
+
 [project.scripts]
 ccw = "ccw.cli:main"
 

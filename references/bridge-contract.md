@@ -1,5 +1,20 @@
 # Bridge Contract
 
+## Opt-in independent HTTP transport
+
+The `web-http` adapter executes text `chat-pro` runs through HTTP without a
+browser controller. It must retain the authorization, private identity,
+single-attempt submission and raw-output contracts below. See
+`docs/http-text-review.md` for setup, commands and live acceptance.
+
+HTTP preflight checks account and model availability. Final mode/model evidence
+comes from the server's exact response branch, alongside matching read-only MCP
+tool provenance. It must not fabricate visible-page evidence. Project/context
+wire parameters and HTTP Deep Research remain unsupported. Existing browser
+defaults change only after actual model, MCP and interruption-recovery evidence.
+
+The remaining visible-transport requirements apply to browser adapters.
+
 The adapter is responsible for visible transport only. It must expose:
 
 - `send`: activate Send or Start exactly once.
