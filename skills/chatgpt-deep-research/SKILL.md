@@ -7,6 +7,10 @@ description: Route a source-heavy investigation to ChatGPT Web Deep Research thr
 
 Use mode `deep-research` for public-source investigations, standards surveys, ecosystem comparisons, policy research, and evidence-heavy technical questions.
 
+HTTP Deep Research is not implemented in this version. Select a compatible
+browser adapter explicitly before starting a Deep Research run; never infer a
+browser fallback from a failed HTTP route.
+
 ## Lifecycle differences from Pro analysis
 
 - Expect a long-running task.

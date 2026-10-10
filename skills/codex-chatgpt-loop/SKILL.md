@@ -5,9 +5,15 @@ description: Run a bounded ChatGPT planning/review loop with Codex execution usi
 
 # Codex ChatGPT Loop
 
-Use the In-app Browser only. Never launch a headed system Chrome unless the user explicitly approves that fallback.
+The default transport is the independent `web-http` executor and has no GUI.
+Use the In-app Browser only for an explicitly selected browser adapter. Never
+launch a headed system Chrome unless the user explicitly approves that fallback.
 
 ## Control plane
+
+The C2C/browser control plane is not part of the default HTTP path. Use it only
+when the run was initialized with an explicit browser adapter or when the user
+requested a browser-backed recovery.
 
 Use the tiny C2C state protocol:
 

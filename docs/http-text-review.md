@@ -1,8 +1,9 @@
 # Independent HTTP text review
 
-The `web-http` adapter is opt-in. It does not import or read another project's
-code, Python environment or credentials. The browser adapter remains the default
-until real model, read-only MCP and interruption-recovery acceptance succeeds.
+The `web-http` adapter is the default for `chat-pro`. It does not import or read
+another project's code, Python environment or credentials. HTTP failures are
+fail-closed and never silently fall back to a browser. Browser adapters remain
+available only through explicit selection.
 ChatGPT Work is forbidden. HTTP Deep Research is not supported by this version.
 
 ## Independent setup
@@ -47,7 +48,7 @@ still be demonstrated by the server. An optional private `proxy` field
 machine cannot reach chatgpt.com directly; it is read from the private
 configuration and is never written into the repository.
 
-## Explicit HTTP run
+## Default HTTP run
 
 Prompts carry only a bounded question, repository-relative targets and read-only
 constraints. ChatGPT must retrieve source, diffs and tests through MCP; never
@@ -74,7 +75,7 @@ HTTP 200, `[DONE]`, configuration booleans and model self-description are not
 acceptance evidence. Run outputs and raw server identity evidence stay private;
 public receipts contain commitments and evidence categories.
 
-## Live acceptance and default switch
+## Live acceptance and fail-closed default
 
 1. Verify the actual returned model against the approved target model.
 2. Have ChatGPT use the expected MCP tool to retrieve an agreed safe repository
@@ -84,12 +85,13 @@ public receipts contain commitments and evidence categories.
    and verify there was only one POST. Cover interruption before receipt of the
    conversation ID as well as interruption after it.
 4. Record real evidence separately from offline fixtures. Compare equivalent
-   tasks for latency and success rate before changing the default workflow.
+   tasks for latency and success rate before declaring the default route
+   production-ready.
 
-Only after all three capabilities pass live acceptance should orchestration
-skills and default adapter selection move to HTTP and browser execution guidance
-be removed. Current code does not automatically promote a transport from mock
-tests or a single successful text response. Existing runs retain their transport.
+Live acceptance is still required before declaring the HTTP route production
+ready. The default route is nevertheless HTTP now; an unverified or unavailable
+HTTP capability stops the run instead of opening a browser. Existing runs retain
+their initialized transport.
 
 ## Acceptance status: 2026-10-10 (Asia/Shanghai)
 
@@ -155,8 +157,9 @@ model as `gpt-6-thinking` (`model_verified=true`). The identity check allows
 exactly the configured-model-to-fallback transition; other model changes are
 still rejected.
 
-The default remains the browser route. Actual reply model, MCP result and live
-interruption recovery are not accepted; browser execution logic is retained.
+The default is now the HTTP route. Actual reply model, MCP result and live
+interruption recovery remain acceptance risks; browser execution logic is kept
+only for an explicitly selected browser route.
 Next steps are to fix the ChatGPT-side connector (MCP 400), then demonstrate a
 successful read-only MCP tool result, and validate the Pro model conversation
 protocol. Preserve the existing run's private intent and locator; neither

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Codex ChatGPT Bridge">
+  <rect width="128" height="128" rx="28" fill="#0B0D12"/>
+  <path d="M44 78c-8 0-14-6-14-14s6-14 14-14h12" fill="none" stroke="#10A37F" stroke-width="9" stroke-linecap="round"/>
+  <path d="M84 50c8 0 14 6 14 14s-6 14-14 14H72" fill="none" stroke="#E8EAED" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="64" cy="64" r="10" fill="#10A37F"/>
+</svg>

@@ -8,7 +8,7 @@ Route Codex tasks to ChatGPT Pro, Deep Research, and Work—then recover, verify
 
 This public-safe Codex Skill makes Codex the management hub for advanced work in a user's visible, signed-in ChatGPT session. Its core is an adapter-neutral delegation receipt: one tamper-evident record binding authorization, prompt fingerprint, submit-once state, model/mode evidence, terminal results, artifacts, citations, acceptance, and continuation—without publishing raw run identities.
 
-It is an orchestration and governance layer, not a new browser automation runtime. The default path uses an already available Codex browser bridge and ChatGPT thread bridge. Optional adapters can map their own evidence into the same receipt. The included native/control-style and Oracle-style fixtures are structural examples only; they do not bundle third-party code or claim official compatibility.
+It is an orchestration and governance layer, not a new browser automation runtime. The default `chat-pro` path uses the independent HTTP text adapter; visible browser bridges are explicit fallbacks. Optional adapters can map their own evidence into the same receipt. The included native/control-style and Oracle-style fixtures are structural examples only; they do not bundle third-party code or claim official compatibility.
 
 ## 30-second Quick Start
 

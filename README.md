@@ -9,7 +9,7 @@ The project combines two pinned MIT foundations:
 - `chicogong/codex-chatgpt-web-orchestrator` for routing, receipts, lifecycle, recovery, and governance.
 - `codex-with-chatgpt` for the C2C control protocol, read-only workspace MCP, OAuth 2.1, pairing, Cloudflare tunnels, execution records, and session recovery.
 
-The Codex In-app Browser is the preferred control surface. A headed system browser is fallback-only and requires explicit user approval.
+The independent HTTP executor is the default `chat-pro` transport. The Codex In-app Browser is available only as an explicitly selected browser route; a headed system browser is never launched implicitly.
 
 ## Permanent policy
 
@@ -82,7 +82,7 @@ Expose it to ChatGPT with the relay: [docs/deployment.md](docs/deployment.md).
 
 ## Integrated C2C loop
 
-The control plane sends tiny `[C2C]` state messages through the In-app Browser. The data plane exposes read-only workspace MCP tools so ChatGPT can inspect code, diffs, search results, git state, tests, and sanitized execution records itself.
+The HTTP path uses the read-only data plane directly. Browser-backed C2C control messages are used only for an explicitly selected browser adapter. The data plane exposes read-only workspace MCP tools so ChatGPT can inspect code, diffs, search results, git state, tests, and sanitized execution records itself.
 
 ```powershell
 .\ccw.cmd c2c exec -- start --tunnel
@@ -109,24 +109,28 @@ Control messages stay under 1 KB and never contain file bodies, diffs, or logs. 
 
 ## Pro review lifecycle
 
+`chat-pro` uses the independent HTTP executor by default and does not open a
+browser. HTTP failures stop the run; they never trigger a browser fallback.
+To use the browser path deliberately, pass
+`--adapter-manifest .\adapters\native-codex-browser.example.json`.
+
 ```powershell
 # 1. Create a run with the exact prompt.
 .\ccw.cmd run init `
   --mode chat-pro `
   --task-kind review `
   --workspace E:\path\to\repo `
-  --adapter-manifest .\adapters\native-codex-browser.example.json `
   --prompt-file .\prompt.md
 
 # 2. Authorize the exact prompt.
 .\ccw.cmd run authorize <run_id>
 
-# 3. Record read-only In-app Browser preflight evidence.
-.\ccw.cmd run preflight <run_id> --observation .\observation.json
+# 3. Run the HTTP preflight with private credentials.
+.\ccw.cmd run preflight-http <run_id> --config <private-config.json>
 
-# 4. Record the single submission intent and acknowledgement.
-.\ccw.cmd run begin-submit <run_id>
-.\ccw.cmd run confirm-submit <run_id> --conversation-identity <private-id>
+# 4. Execute the single HTTP submission and recover only the same run if needed.
+.\ccw.cmd run execute-http <run_id> --config <private-config.json>
+.\ccw.cmd run recover-http <run_id> --config <private-config.json>
 
 # 5. Capture, compress, verify, and finalize.
 .\ccw.cmd run capture <run_id> --raw-file .\response.md --terminal-signal
@@ -199,7 +203,7 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <work
 
 One workspace can cover many repositories (point the bridge root at their parent directory): `workspace_info` lists them and `git_status`/`git_diff` take a `repo` argument. See [docs/deployment.md](docs/deployment.md).
 
-Always use the In-app Browser for ChatGPT pages. Do not launch a headed system browser.
+When a browser adapter is explicitly selected, use the In-app Browser for ChatGPT pages. Do not launch a headed system browser.
 
 ## Live smoke
 
@@ -213,6 +217,6 @@ Runtime state is stored in `CCW_HOME`, default `~/.ccw/runs/<run_id>`. `private.
 
 See [UPSTREAM.md](UPSTREAM.md) and [THIRD_PARTY.md](THIRD_PARTY.md).
 
-## Independent HTTP text review (opt-in)
+## Independent HTTP text review (default for chat-pro)
 
-See [HTTP text review](docs/http-text-review.md) for independent credential setup, commands and live acceptance. No other project's provider, environment or credentials are referenced. Browser defaults remain until real model, read-only MCP and interruption-recovery acceptance succeeds.
+See [HTTP text review](docs/http-text-review.md) for independent credential setup, commands and live acceptance. No other project's provider, environment or credentials are referenced. HTTP remains fail-closed when live acceptance is incomplete; browser execution is explicit only.

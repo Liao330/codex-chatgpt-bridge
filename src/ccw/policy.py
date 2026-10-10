@@ -54,6 +54,26 @@ def validate_adapter_manifest(manifest: Mapping[str, object], *, mode: str) -> l
     return sorted(set(issues))
 
 
+def default_adapter_manifest(*, mode: str) -> dict[str, object]:
+    """Return the implicit transport contract.
+
+    The HTTP transport is the only implicit route. Deep Research has no HTTP
+    implementation yet, so callers must opt into a compatible visible
+    adapter instead of receiving a hidden browser fallback.
+    """
+    normalized = normalize_mode(mode)
+    if normalized != "chat-pro":
+        raise ValidationError(
+            "no-GUI default is available only for chat-pro; provide an explicit adapter for deep-research"
+        )
+    return {
+        "identity": "independent-web-http",
+        "family": "native-control-style",
+        "kind": "web-http",
+        "capabilities": ["send", "observe", "capture", "stable_identity", "chat_pro"],
+    }
+
+
 def preflight_from_dict(value: Mapping[str, object]) -> str:
     policy = upstream_policy()
     allowed = {
@@ -123,6 +143,4 @@ def select_adapter(
 ) -> str | None:
     policy = upstream_policy()
     upstream_mode = policy.Mode(normalize_mode(mode))
-    return policy.select_backend(
-        upstream_mode, available, requested_backend=requested_backend
-    )
+    return policy.select_backend(upstream_mode, available, requested_backend=requested_backend)

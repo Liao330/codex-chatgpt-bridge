@@ -32,6 +32,7 @@ class Completion(str, Enum):
 
 
 BACKEND_ORDER = (
+    "web-http",
     "native",
     "codex-chatgpt-control",
     "oracle",
@@ -233,7 +234,10 @@ def select_backend(
 ) -> str | None:
     """Pick a backend from declared capabilities; never probe or install one."""
     required = required_capabilities(mode)
-    candidates = (requested_backend,) if requested_backend else BACKEND_ORDER
+    # HTTP is the only implicit transport. Visible/browser transports must be
+    # explicitly requested so discovery of an in-app browser cannot silently
+    # defeat the no-GUI default.
+    candidates = (requested_backend,) if requested_backend else ("web-http",)
     for backend in candidates:
         if backend is None:
             continue

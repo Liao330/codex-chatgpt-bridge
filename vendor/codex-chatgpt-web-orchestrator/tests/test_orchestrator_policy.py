@@ -107,20 +107,20 @@ class BackendTests(unittest.TestCase):
         )
         self.assertEqual(present, {"manual"})
 
-    def test_native_preferred_when_capable(self):
+    def test_deep_research_has_no_implicit_browser_fallback(self):
         available = {
             "native": FULL | {"deep_research"},
             "oracle": FULL | {"deep_research"},
         }
-        self.assertEqual(select_backend(Mode.DEEP_RESEARCH, available), "native")
+        self.assertIsNone(select_backend(Mode.DEEP_RESEARCH, available))
 
-    def test_degrades_without_installing(self):
+    def test_deep_research_does_not_degrade_to_browser(self):
         available = {
             "native": {"capture", "stable_identity"},
             "oracle": FULL | {"deep_research"},
             "manual": FULL | {"deep_research"},
         }
-        self.assertEqual(select_backend(Mode.DEEP_RESEARCH, available), "oracle")
+        self.assertIsNone(select_backend(Mode.DEEP_RESEARCH, available))
 
     def test_requested_backend_fails_closed_when_incapable(self):
         available = {
@@ -345,12 +345,13 @@ class EvidenceAndCliTests(unittest.TestCase):
                 "--capabilities",
                 str(ROOT / "tests" / "fixtures" / "capabilities" / "native-all.json"),
             ],
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
         )
         output = json.loads(result.stdout)
-        self.assertEqual(output["backend"], "native")
+        self.assertEqual(result.returncode, 2)
+        self.assertIsNone(output["backend"])
         self.assertEqual(output["mode"], "work")
         self.assertFalse(output["transmission_authorized"])
 

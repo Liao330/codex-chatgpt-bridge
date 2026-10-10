@@ -18,6 +18,7 @@ from .policy import (
     normalize_mode,
     preflight_from_dict,
     required_capabilities,
+    default_adapter_manifest,
     select_adapter,
     validate_adapter_manifest,
 )
@@ -125,7 +126,11 @@ def command_preflight_check(args: argparse.Namespace) -> int:
 
 
 def command_run_init(args: argparse.Namespace) -> int:
-    manifest = _read_json(args.adapter_manifest)
+    manifest = (
+        _read_json(args.adapter_manifest)
+        if args.adapter_manifest
+        else default_adapter_manifest(mode=args.mode)
+    )
     state = create_run(
         mode=args.mode,
         task_kind=args.task_kind,
@@ -400,7 +405,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_init.add_argument("--mode", required=True, choices=("chat-pro", "deep-research"))
     run_init.add_argument("--task-kind", required=True)
     run_init.add_argument("--workspace", required=True)
-    run_init.add_argument("--adapter-manifest", required=True)
+    run_init.add_argument(
+        "--adapter-manifest",
+        help="explicit adapter manifest; omitted means the no-GUI web-http adapter for chat-pro",
+    )
     run_init.add_argument("--prompt-file")
     run_init.add_argument("--prompt-text")
     run_init.add_argument("--allowed-path", action="append", default=[])

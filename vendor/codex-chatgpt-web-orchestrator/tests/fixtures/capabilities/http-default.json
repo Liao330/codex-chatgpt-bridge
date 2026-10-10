@@ -1,0 +1,11 @@
+{
+  "backends": {
+    "web-http": [
+      "send",
+      "observe",
+      "capture",
+      "stable_identity",
+      "chat_pro"
+    ]
+  }
+}

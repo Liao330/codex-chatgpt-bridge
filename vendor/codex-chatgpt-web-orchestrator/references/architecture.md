@@ -30,7 +30,7 @@ Owns visible transport mechanics only:
 - read complete responses, citations, and artifacts.
 - translate runtime evidence into the receipt without exposing raw identities publicly.
 
-The preferred implementation is the native Codex Browser plus ChatGPT thread bridge. Optional backends implement the same capability contract. This project does not reproduce selectors, browser drivers, session handling, or provider-specific code.
+The preferred implementation for `chat-pro` is the independent HTTP text adapter. The native Codex Browser plus ChatGPT thread bridge remains an explicit fallback. Optional backends implement the same capability contract. This project does not reproduce selectors, browser drivers, session handling, or provider-specific code.
 
 ## 3. Result closure layer
 

@@ -1,6 +1,6 @@
 {
   "name": "codex-chatgpt-bridge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Codex orchestration for ChatGPT Web planning, read-only MCP inspection, review, and Deep Research with Work permanently disabled.",
   "author": {
     "name": "Local developer"
@@ -14,9 +14,10 @@
     "review"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Codex ChatGPT Bridge",
-    "shortDescription": "Use ChatGPT Web Pro and Deep Research from Codex without Work.",
+    "shortDescription": "ChatGPT Pro reviews from Codex",
     "longDescription": "A dual-plane bridge that combines Codex with ChatGPT control-plane state and a read-only MCP data plane. It retains receipt-backed governance, conversation recovery, compressed output, verification, and Deep Research while permanently forbidding ChatGPT Work.",
     "developerName": "Local developer",
     "category": "Developer Tools",
@@ -29,6 +30,8 @@
       "Use ChatGPT Web Pro to review the current diff.",
       "Ask ChatGPT Pro to challenge this architecture.",
       "Run a Deep Research task and compress the evidence."
-    ]
+    ],
+    "composerIcon": "./assets/composer-icon.svg",
+    "logo": "./assets/logo.svg"
   }
 }

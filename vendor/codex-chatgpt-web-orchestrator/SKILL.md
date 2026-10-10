@@ -7,7 +7,7 @@ description: Govern ChatGPT web delegation through an adapter-neutral receipt th
 
 Keep Codex as the management hub. The core deliverable is an adapter-neutral delegation receipt that proves how eligible ChatGPT Chat, Deep Research, and Work assignments were authorized, submitted, observed, recovered, verified, and retained for continuation.
 
-This Skill is an orchestration layer, not a browser controller. Prefer the native Codex Browser and ChatGPT thread bridge. Use codex-chatgpt-control, Oracle, or Agentify Desktop only as already-available, explicitly authorized capability adapters. They are unofficial third-party projects; do not install them, copy their code, inspect credentials, or imply affiliation.
+This Skill is an orchestration layer, not a browser controller. Prefer the independent HTTP text adapter for `chat-pro`; use the native Codex Browser and ChatGPT thread bridge only as explicitly authorized adapters. Use codex-chatgpt-control, Oracle, or Agentify Desktop only as already-available, explicitly authorized capability adapters. They are unofficial third-party projects; do not install them, copy their code, inspect credentials, or imply affiliation.
 
 ## Maintain the delegation receipt
 

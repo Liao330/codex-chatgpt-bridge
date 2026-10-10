@@ -1,7 +1,7 @@
 import unittest
 
 from ccw.errors import ValidationError, WorkForbiddenError
-from ccw.policy import choose_route, detect_presence, normalize_mode, required_capabilities, validate_adapter_manifest
+from ccw.policy import choose_route, default_adapter_manifest, detect_presence, normalize_mode, required_capabilities, validate_adapter_manifest
 
 
 class PolicyTests(unittest.TestCase):
@@ -62,6 +62,25 @@ class PolicyTests(unittest.TestCase):
             "capabilities": ["send", "observe", "capture", "stable_identity", "chat_pro", "work"],
         }
         self.assertIn("work-capability-forbidden", validate_adapter_manifest(manifest, mode="chat-pro"))
+
+    def test_default_adapter_is_http(self):
+        manifest = default_adapter_manifest(mode="chat-pro")
+        self.assertEqual("web-http", manifest["kind"])
+        self.assertIn("chat_pro", manifest["capabilities"])
+
+    def test_deep_research_requires_explicit_adapter(self):
+        with self.assertRaises(ValidationError):
+            default_adapter_manifest(mode="deep-research")
+
+    def test_backend_selection_does_not_implicitly_choose_native(self):
+        from ccw.policy import select_adapter
+
+        capabilities = {
+            "web-http": ["send", "observe", "capture", "stable_identity", "chat_pro"],
+            "native": ["send", "observe", "capture", "stable_identity", "chat_pro"],
+        }
+        self.assertEqual("web-http", select_adapter(mode="chat-pro", available=capabilities))
+        self.assertEqual("native", select_adapter(mode="chat-pro", available=capabilities, requested_backend="native"))
 
 
 if __name__ == "__main__":

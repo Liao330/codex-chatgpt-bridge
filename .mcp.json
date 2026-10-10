@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "codex-bridge": {
+      "type": "streamable-http",
+      "url": "https://codex-c2c-vps-migration.tail8496c3.ts.net/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "dcr"
+            }
+          }
+        }
+      }
+    }
+  }
+}

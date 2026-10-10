@@ -11,6 +11,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CliTests(unittest.TestCase):
+    def test_run_init_defaults_to_http_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(ROOT / "src")
+            env["CCW_HOME"] = str(Path(tmp) / "ccw-home")
+            result = subprocess.run(
+                [sys.executable, "-m", "ccw", "run", "init", "--mode", "chat-pro",
+                 "--task-kind", "review", "--workspace", tmp, "--prompt-text", "review"],
+                cwd=ROOT, env=env, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('"mode": "chat-pro"', result.stdout)
+
     def test_route_plan_rejects_work(self):
         with tempfile.TemporaryDirectory() as tmp:
             capabilities = Path(tmp) / "caps.json"

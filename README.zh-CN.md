@@ -9,7 +9,7 @@
 - `chicogong/codex-chatgpt-web-orchestrator`：路由、receipt、生命周期、恢复和治理。
 - `codex-with-chatgpt`：C2C 控制协议、只读 workspace MCP、OAuth 2.1、配对、Cloudflare Tunnel、执行记录和会话恢复。
 
-控制面优先使用 Codex In-app Browser。headed 系统浏览器仅作为 fallback，并且必须获得用户明确同意。
+`chat-pro` 默认使用独立 HTTP 执行器，不打开浏览器。HTTP 失败会直接停止，不会静默回退到浏览器；只有显式选择浏览器 adapter 才使用 In-app Browser。
 
 ## 永久策略
 
@@ -82,7 +82,7 @@ scripts/             Windows 启动、测试和依赖脚本
 
 ## 集成后的 C2C 闭环
 
-控制面通过 In-app Browser 发送小于 1 KB 的 `[C2C]` 状态消息。数据面通过只读 workspace MCP 暴露代码、diff、搜索、git、测试和脱敏执行记录，让 ChatGPT 自己读取需要的事实。
+HTTP 路径直接使用只读数据面。只有显式选择浏览器 adapter 时，控制面才通过 In-app Browser 发送小于 1 KB 的 `[C2C]` 状态消息。数据面通过只读 workspace MCP 暴露代码、diff、搜索、git、测试和脱敏执行记录。
 
 ```powershell
 .\ccw.cmd c2c exec -- start --tunnel
@@ -115,18 +115,17 @@ scripts/             Windows 启动、测试和依赖脚本
   --mode chat-pro `
   --task-kind review `
   --workspace E:\path\to\repo `
-  --adapter-manifest .\adapters\native-codex-browser.example.json `
   --prompt-file .\prompt.md
 
 # 2. 授权精确 prompt。
 .\ccw.cmd run authorize <run_id>
 
-# 3. 记录 In-app Browser 的只读 preflight 证据。
-.\ccw.cmd run preflight <run_id> --observation .\observation.json
+# 3. 使用私有配置执行 HTTP preflight。
+.\ccw.cmd run preflight-http <run_id> --config <private-config.json>
 
-# 4. 记录单次提交意图和 acknowledgement。
-.\ccw.cmd run begin-submit <run_id>
-.\ccw.cmd run confirm-submit <run_id> --conversation-identity <private-id>
+# 4. 执行单次 HTTP 提交；需要恢复时只能恢复同一个 run。
+.\ccw.cmd run execute-http <run_id> --config <private-config.json>
+.\ccw.cmd run recover-http <run_id> --config <private-config.json>
 
 # 5. 捕获、压缩、核验并生成 receipt。
 .\ccw.cmd run capture <run_id> --raw-file .\response.md --terminal-signal
@@ -199,7 +198,7 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <工�
 
 一个工作区可以覆盖多个仓库（bridge 根目录设为父目录即可）：`workspace_info` 会返回仓库列表，`git_status`/`git_diff` 用 `repo` 参数选择仓库。详见 [docs/deployment.md](docs/deployment.md)。
 
-访问 ChatGPT 页面一律使用 In-app Browser，不要启动 headed 系统浏览器。
+显式选择浏览器 adapter 时，访问 ChatGPT 页面使用 In-app Browser，不要启动 headed 系统浏览器。
 
 ## Live smoke
 
@@ -213,6 +212,6 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1 -WorkspacePath <工�
 
 参见 [UPSTREAM.md](UPSTREAM.md) 和 [THIRD_PARTY.md](THIRD_PARTY.md)。
 
-## 独立 HTTP 文本审查（显式启用）
+## 独立 HTTP 文本审查（chat-pro 默认）
 
-新增 web-http 执行器与本机 DPAPI 凭证入口，命令和真实验收步骤见 [HTTP 文本审查](docs/http-text-review.md)。不引用其他项目代码、环境或凭证。当前默认未切换；真实目标模型、只读 MCP 和断线恢复全部通过后才切换并移除浏览器执行指引。
+新增 web-http 执行器与本机 DPAPI 凭证入口，命令和真实验收步骤见 [HTTP 文本审查](docs/http-text-review.md)。不引用其他项目代码、环境或凭证。HTTP 未通过实时能力验收时会 fail-closed；浏览器路径必须显式选择。
